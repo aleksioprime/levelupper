@@ -34,8 +34,8 @@ async def register(
 
 
 @router.post(
-    path='/auth',
-    summary='Авторизирует пользователя',
+    path='/login',
+    summary='Выполняет вход в аккаунт',
     description='Авторизирует пользователя, выдает новые jwt токены и записывает вход в историю',
     response_model=TokenSchema,
 )
@@ -46,7 +46,7 @@ async def authenticate(
     """
     Авторизует пользователя и выдает новые jwt токены
     """
-    token_pair: TokenSchema = await service.auth(body)
+    token_pair: TokenSchema = await service.login(body)
     return token_pair
 
 

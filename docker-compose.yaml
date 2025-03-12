@@ -28,8 +28,6 @@ services:
     image: redis:6
     container_name: learning-redis
     <<: *app
-    ports:
-      - "6379:6379"
     volumes:
       - redis_volume:/data
     healthcheck:
@@ -46,7 +44,7 @@ services:
     volumes:
       - ./auth:/usr/src/app/
     ports:
-      - "8100:8000"
+      - "8200:8000"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/ping"]
       interval: 30s

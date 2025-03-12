@@ -29,8 +29,8 @@ app = FastAPI(
     version="0.0.1", # Версия приложения
     title=settings.project_name, # Название приложения
     description=settings.project_description, # Описание приложения
-    docs_url="/ugc/api/openapi", # URL для документации Swagger
-    openapi_url="/ugc/api/openapi.json", # URL для OpenAPI схемы
+    docs_url="/api/openapi", # URL для документации Swagger
+    openapi_url="/api/openapi.json", # URL для OpenAPI схемы
     default_response_class=ORJSONResponse, # Быстрая обработка JSON с ORJSON
 )
 
