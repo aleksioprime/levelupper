@@ -38,6 +38,7 @@ async def register(
     summary='Выполняет вход в аккаунт',
     description='Авторизирует пользователя, выдает новые jwt токены и записывает вход в историю',
     response_model=TokenSchema,
+    status_code=status.HTTP_200_OK,
 )
 async def authenticate(
         body: AuthSchema,
@@ -54,6 +55,7 @@ async def authenticate(
     path='/logout',
     summary='Выполняет выход из аккаунта',
     description='Помечает access токен отозванным, а refresh токен удаляет из базы',
+    status_code=status.HTTP_200_OK,
 )
 async def logout(
         tokens: TokenSchema,
@@ -71,6 +73,7 @@ async def logout(
     summary='Выдает новый access-токен',
     description='Выдает новый access-токен по предоставленному refresh-токену',
     response_model=AccessTokenSchema,
+    status_code=status.HTTP_200_OK,
 )
 async def refresh_tokens(
         token: RefreshTokenSchema,
