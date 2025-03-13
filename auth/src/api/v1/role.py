@@ -8,11 +8,12 @@ from uuid import UUID
 from fastapi import APIRouter, Depends
 from starlette import status
 
-from src.dependencies.auth import get_user_by_jwt
-from src.schemas.user import UserJWT
+from src.dependencies.auth import get_user_by_jwt, check_roles
 from src.dependencies.role import get_role_service
+from src.schemas.user import UserJWT
 from src.schemas.role import RoleUpdateSchema, RoleSchema
 from src.services.role import RoleService
+from src.constants.role import RoleName
 
 router = APIRouter()
 
@@ -22,6 +23,7 @@ router = APIRouter()
     response_model=list[RoleSchema],
     status_code=status.HTTP_200_OK,
 )
+@check_roles([RoleName.ADMIN])
 async def get_role_all(
         service: Annotated[RoleService, Depends(get_role_service)],
         user: Annotated[UserJWT, Depends(get_user_by_jwt)],
@@ -39,6 +41,7 @@ async def get_role_all(
     description='Создаёт роль, если пользователь авторизован',
     status_code=status.HTTP_201_CREATED,
 )
+@check_roles([RoleName.ADMIN])
 async def create_role(
         service: Annotated[RoleService, Depends(get_role_service)],
         user: Annotated[UserJWT, Depends(get_user_by_jwt)],
@@ -58,6 +61,7 @@ async def create_role(
     response_model=RoleSchema,
     status_code=status.HTTP_200_OK,
 )
+@check_roles([RoleName.ADMIN])
 async def update_role(
         role_id: UUID,
         body: RoleUpdateSchema,
@@ -77,6 +81,7 @@ async def update_role(
     description='Удаляет роль по заданному идентификатору',
     status_code=status.HTTP_204_NO_CONTENT,
 )
+@check_roles([RoleName.ADMIN])
 async def delete_role(
         role_id: UUID,
         service: Annotated[RoleService, Depends(get_role_service)],

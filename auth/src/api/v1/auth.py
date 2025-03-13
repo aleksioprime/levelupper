@@ -7,10 +7,11 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 from starlette import status
 
-from src.dependencies.auth import get_auth_service
+from src.dependencies.auth import get_auth_service, check_roles
 from src.schemas.auth import RegisterSchema, AuthSchema
 from src.schemas.token import TokenSchema, RefreshTokenSchema, AccessTokenSchema
 from src.services.auth import AuthService
+from src.constants.role import RoleName
 
 router = APIRouter()
 
@@ -22,6 +23,7 @@ router = APIRouter()
     status_code=status.HTTP_201_CREATED,
     response_model=TokenSchema,
 )
+@check_roles([RoleName.ADMIN])
 async def register(
         body: RegisterSchema,
         service: Annotated[AuthService, Depends(get_auth_service)],

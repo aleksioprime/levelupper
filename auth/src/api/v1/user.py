@@ -8,11 +8,12 @@ from uuid import UUID
 from fastapi import APIRouter, Depends
 from starlette import status
 
-from src.dependencies.auth import get_user_by_jwt
+from src.dependencies.auth import get_user_by_jwt, check_roles
 from src.dependencies.user import get_user_service
 from src.schemas.user import UserUpdateSchema, UserJWT, UserSchema
 from src.schemas.role import RoleAssignment
 from src.services.user import UserService
+from src.constants.role import RoleName
 
 router = APIRouter()
 
@@ -22,6 +23,7 @@ router = APIRouter()
     response_model=list[UserSchema],
     status_code=status.HTTP_200_OK,
 )
+@check_roles([RoleName.ADMIN])
 async def get_all_users(
         service: Annotated[UserService, Depends(get_user_service)],
         user: Annotated[UserJWT, Depends(get_user_by_jwt)],
@@ -54,6 +56,7 @@ async def get_user_me(
     response_model=UserSchema,
     status_code=status.HTTP_200_OK,
 )
+@check_roles([RoleName.ADMIN])
 async def update_user(
     user_id: UUID,
     user: Annotated[UserJWT, Depends(get_user_by_jwt)],
@@ -71,6 +74,7 @@ async def update_user(
     summary='Удаление пользователя',
     status_code=status.HTTP_204_NO_CONTENT,
 )
+@check_roles([RoleName.ADMIN])
 async def delete_user(
     user_id: UUID,
     service: Annotated[UserService, Depends(get_user_service)],
@@ -87,6 +91,7 @@ async def delete_user(
     summary='Назначить роль пользователю',
     status_code=status.HTTP_200_OK,
 )
+@check_roles([RoleName.ADMIN])
 async def add_role_to_user(
         user_id: UUID,
         role_assignment: RoleAssignment,
@@ -104,6 +109,7 @@ async def add_role_to_user(
     summary='Отозвать роль у пользователя',
     status_code=status.HTTP_200_OK,
 )
+@check_roles([RoleName.ADMIN])
 async def remove_role_from_user(
         user_id: UUID,
         role_assignment: RoleAssignment,
