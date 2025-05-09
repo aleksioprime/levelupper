@@ -1,3 +1,6 @@
+include:
+  - ./auth/docker-compose.yaml
+
 x-app: &app
   env_file:
     - ./.env
