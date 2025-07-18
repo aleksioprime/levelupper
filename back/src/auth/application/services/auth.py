@@ -9,8 +9,8 @@ from redis.asyncio import Redis
 
 from src.common.core.config import settings
 from src.common.exceptions.base import BaseException
-from src.auth.infrastructure.persistence.sqlalchemy.models.user import User
-from src.auth.infrastructure.persistence.sqlalchemy.repositories.uow import UnitOfWork
+from src.auth.domain.models.user import User
+from src.auth.domain.uow import AbstractUnitOfWork
 from src.auth.application.schemas.auth import AuthSchema
 from src.auth.application.schemas.token import TokenSchema, AccessTokenSchema
 from src.common.utils.token import JWTHelper
@@ -21,9 +21,9 @@ class AuthService:
     Сервис для управления аутентификацией, обновлением токена и выходом пользователей
     """
 
-    def __init__(self, uow: UnitOfWork, redis: Redis, jwt_helper: JWTHelper):
+    def __init__(self, uow: AbstractUnitOfWork, redis: Redis, jwt_helper: JWTHelper):
         """
-        Инициализирует AuthService с UnitOfWork и Redis
+        Инициализирует AuthService с абстрактным UnitOfWork и Redis
         """
         self.uow = uow
         self.redis = redis
@@ -94,3 +94,4 @@ class AuthService:
             value="revoked",
             ex=expire_time,
         )
+

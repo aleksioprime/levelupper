@@ -1,10 +1,11 @@
-from src.db.postgres import async_session_maker
+from src.common.db.postgres import async_session_maker
 
 from src.auth.infrastructure.persistence.sqlalchemy.repositories.user import UserRepository
 from src.auth.infrastructure.persistence.sqlalchemy.repositories.auth import AuthRepository
+from src.auth.domain.uow import AbstractUnitOfWork
 
 
-class UnitOfWork:
+class UnitOfWork(AbstractUnitOfWork):
     def __init__(self):
         self.session_factory = async_session_maker
 
