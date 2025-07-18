@@ -83,6 +83,7 @@ services:
       context: ./back
     container_name: learning-backend
     <<: *app
+    command: python -m src.main
     volumes:
       - ./back:/usr/src/app/
     ports:

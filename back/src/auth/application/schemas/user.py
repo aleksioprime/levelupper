@@ -2,7 +2,7 @@ from typing import Optional, List
 from uuid import UUID
 from pydantic import BaseModel, Field
 
-from src.schemas.pagination import BasePaginationParams
+from src.auth.application.schemas.pagination import BasePaginationParams
 
 class UserQueryParams(BasePaginationParams):
 

@@ -45,12 +45,12 @@ class UserRepository(BaseUserRepository, BaseSQLRepository):
         result = await self.session.execute(query)
         return result.scalar_one()
 
-    async def create(self, user: User) -> None:
+    async def create(self, user: ORMUser) -> None:
         """ Добавляет нового пользователя в текущую сессию """
         orm_user = domain_to_orm(user)
         self.session.add(orm_user)
 
-    async def update(self, user_id: UUID, body: UserUpdateSchema) -> User:
+    async def update(self, user_id: UUID, body: UserUpdateSchema) -> ORMUser:
         """ Обновляет пользователя по его ID """
         update_data = {key: value for key, value in body.dict(exclude_unset=True).items()}
         if not update_data:
@@ -96,4 +96,3 @@ class UserRepository(BaseUserRepository, BaseSQLRepository):
             .values(photo=photo)
         )
         await self.session.execute(stmt)
-

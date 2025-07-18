@@ -4,7 +4,7 @@ from typing import Optional, Set, Union
 from fastapi import HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from src.utils.token import JWTHelper
+from src.common.utils.token import JWTHelper
 
 
 class JWTBearer(HTTPBearer):

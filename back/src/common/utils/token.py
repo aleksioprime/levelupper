@@ -1,8 +1,8 @@
 import time
 from jwt import ExpiredSignatureError, InvalidTokenError, decode
 
-from src.core.config import settings
-from src.schemas.auth import UserJWT
+from src.common.core.config import settings
+from src.auth.application.schemas.auth import UserJWT
 
 class JWTHelper:
     """
