@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from starlette import status
 
-from src.exceptions.base import BaseException, NotFoundException
+from src.common.exceptions.base import BaseException, NotFoundException
 
 
 def register_exception_handlers(app: FastAPI):

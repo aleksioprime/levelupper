@@ -13,7 +13,9 @@ from src.common.core.logger import LOGGING
 from src.common.api import ping
 from src.common.exceptions.handlers import register_exception_handlers
 
-from src.auth.presentation import router
+from src.auth.presentation import router as auth_router
+from src.course.presentation import router as course_router
+import uvicorn
 
 
 @asynccontextmanager
@@ -53,7 +55,8 @@ app.add_middleware(
 # Подключение роутера для проверки доступности сервера
 app.include_router(ping.router, prefix="/api/v1", tags=["ping"])
 # Подключение роутера для работы с пациентами
-app.include_router(router, prefix="/api/v1", tags=["auth"])
+app.include_router(auth_router, prefix="/api/v1", tags=["auth"])
+app.include_router(course_router, prefix="/api/v1", tags=["courses"])
 
 
 # Точка входа в приложение

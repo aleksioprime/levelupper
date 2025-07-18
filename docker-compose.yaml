@@ -77,7 +77,7 @@ services:
     ports:
       - 9200:9200
     volumes:
-      - es_data:/usr/share/elasticsearch/data
+      - es_data:
 
   backend:
     build:
