@@ -5,8 +5,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 
-from src.models.user import User
-from src.db.postgres import async_session_maker
+from src.auth.infrastructure.persistence.sqlalchemy.models.user import User
+from src.common.db.postgres import async_session_maker
 
 async def create_or_update_superuser(session: AsyncSession, username: str, password: str, email: str, force: bool):
     """
