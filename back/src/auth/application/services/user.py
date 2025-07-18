@@ -1,16 +1,18 @@
 import os
 import shutil
 import logging
+import uuid
 from uuid import UUID
 
 from fastapi import UploadFile, HTTPException
 from sqlalchemy.exc import IntegrityError
+from werkzeug.security import generate_password_hash
 
 
 from src.common.core.config import settings
 from src.common.exceptions.base import BaseException
-from src.auth.infrastructure.persistence.sqlalchemy.models.user import User
-from src.auth.infrastructure.persistence.sqlalchemy.repositories.uow import UnitOfWork
+from src.auth.domain.models.user import User
+from src.auth.domain.uow import AbstractUnitOfWork
 from src.auth.application.schemas.pagination import PaginatedResponse
 from src.auth.application.schemas.user import UserCreateSchema, UserUpdateSchema, UpdatePasswordUserSchema, UserSchema, UserQueryParams
 
@@ -20,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 class UserService:
 
-    def __init__(self, uow: UnitOfWork):
+    def __init__(self, uow: AbstractUnitOfWork):
         self.uow = uow
 
     async def get_user_all(self, params: UserQueryParams) -> PaginatedResponse[UserSchema]:
@@ -49,7 +51,7 @@ class UserService:
             user = await self.uow.user.get_user_by_id(user_id)
             if not user:
                 raise BaseException(f"Пользователь с ID {user_id} не найден")
-        return user
+        return UserSchema.model_validate(user)
 
     async def create(self, body: UserCreateSchema) -> User:
         """
@@ -58,9 +60,10 @@ class UserService:
         async with self.uow:
             try:
                 user = User(
+                    id=uuid.uuid4(),
                     username=body.username,
-                    password=body.password,
                     email=body.email,
+                    hashed_password=generate_password_hash(body.password),
                     first_name=body.first_name,
                     last_name=body.last_name,
                 )
@@ -69,7 +72,7 @@ class UserService:
             except IntegrityError as e:
                 raise BaseException("Пользователь уже существует") from e
 
-        return user
+        return UserSchema.model_validate(user)
 
     async def update(self, user_id: UUID, body: UserUpdateSchema) -> UserSchema:
         """
@@ -77,7 +80,7 @@ class UserService:
         """
         async with self.uow:
             user = await self.uow.user.update(user_id, body)
-        return user
+        return UserSchema.model_validate(user)
 
     async def delete(self, user_id: UUID, auth_user_id: UUID) -> None:
         """
@@ -165,3 +168,4 @@ class UserService:
                     logger.warning(f"Не удалось удалить фото пользователя {user_id}: {e}")
 
             await self.uow.user.update_photo(user_id, None)
+

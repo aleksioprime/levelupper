@@ -7,7 +7,7 @@ from src.auth.presentation.dependencies.uow import get_unit_of_work
 from src.auth.application.services.user import UserService
 from src.auth.application.schemas.pagination import BasePaginationParams
 from src.auth.application.schemas.user import UserQueryParams
-from src.auth.infrastructure.persistence.sqlalchemy.repositories.uow import UnitOfWork
+from src.auth.domain.uow import AbstractUnitOfWork
 
 
 def get_user_params(
@@ -22,6 +22,7 @@ def get_user_params(
 
 
 async def get_user_service(
-        uow: Annotated[UnitOfWork, Depends(get_unit_of_work)],
+        uow: Annotated[AbstractUnitOfWork, Depends(get_unit_of_work)],
 ):
     return UserService(uow)
+
