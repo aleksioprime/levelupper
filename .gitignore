@@ -1,6 +1,12 @@
 logs
-records
 __pycache__
+
+.vscode
+.python-version
+.mypy_cache
+
+node_modules
+
 .python-version
 .pytest_cache
 .DS_Store

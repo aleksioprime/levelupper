@@ -15,7 +15,6 @@ from src.common.exceptions.handlers import register_exception_handlers
 
 from src.auth.presentation import router as auth_router
 from src.course.presentation import router as course_router
-import uvicorn
 
 
 @asynccontextmanager
@@ -54,8 +53,9 @@ app.add_middleware(
 
 # Подключение роутера для проверки доступности сервера
 app.include_router(ping.router, prefix="/api/v1", tags=["ping"])
-# Подключение роутера для работы с пациентами
+# Подключение роутера для работы с авторизацией
 app.include_router(auth_router, prefix="/api/v1", tags=["auth"])
+# Подключение роутера для работы с курсами
 app.include_router(course_router, prefix="/api/v1", tags=["courses"])
 
 
