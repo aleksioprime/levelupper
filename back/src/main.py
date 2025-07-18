@@ -7,11 +7,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import ORJSONResponse
 from redis.asyncio import Redis
 
-from src.db import redis
-from src.core.config import settings
-from src.core.logger import LOGGING
-from src.api.v1 import ping, patient
-from src.exceptions.handlers import register_exception_handlers
+from src.common.db import redis
+from src.common.core.config import settings
+from src.common.core.logger import LOGGING
+from src.common.api import ping
+from src.common.exceptions.handlers import register_exception_handlers
+
+from src.auth.presentation import router
 
 
 @asynccontextmanager
@@ -51,7 +53,7 @@ app.add_middleware(
 # Подключение роутера для проверки доступности сервера
 app.include_router(ping.router, prefix="/api/v1", tags=["ping"])
 # Подключение роутера для работы с пациентами
-app.include_router(patient.router, prefix="/api/v1", tags=["patient"])
+app.include_router(router, prefix="/api/v1", tags=["auth"])
 
 
 # Точка входа в приложение

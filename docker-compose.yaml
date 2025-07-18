@@ -1,5 +1,4 @@
-include:
-  - ./auth/docker-compose.yaml
+version: "3.8"
 
 x-app: &app
   env_file:
@@ -13,11 +12,7 @@ services:
     container_name: learning-postgres
     <<: *app
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "sh -c 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}'",
-        ]
+      test: ["CMD-SHELL", "sh -c 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}'"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -39,65 +34,84 @@ services:
       timeout: 5s
       retries: 5
 
-  auth:
+  airflow-webserver:
+    image: apache/airflow:2.9.1-python3.11
+    container_name: airflow-webserver
+    <<: *app
+    depends_on:
+      - postgres
+      - redis
+      - elasticsearch
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+      - ./plugins:/opt/airflow/plugins
+      - ./init.sh:/opt/airflow/init.sh
+    ports:
+      - 8380:8080
+    entrypoint: /opt/airflow/init.sh
+    command: webserver
+
+  airflow-scheduler:
+    image: apache/airflow:2.9.1-python3.11
+    container_name: airflow-scheduler
+    <<: *app
+    depends_on:
+      - airflow-webserver
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+      - ./plugins:/opt/airflow/plugins
+      - ./init.sh:/opt/airflow/init.sh
+    entrypoint: /opt/airflow/init.sh
+    command: scheduler
+
+  elasticsearch:
+    image: elasticsearch:8.13.0
+    container_name: elasticsearch
+    <<: *app
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: 'false'
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
+    ports:
+      - 9200:9200
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+
+  backend:
     build:
-      context: ./auth
-    container_name: learning-auth
+      context: ./back
+    container_name: learning-backend
     <<: *app
     volumes:
-      - ./auth:/usr/src/app/
+      - ./back:/usr/src/app/
     ports:
-      - "8200:8000"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/ping"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 5s
+      - "8301:8000"
     depends_on:
       redis:
         condition: service_healthy
       postgres:
         condition: service_healthy
 
-  # backend:
-  #   build:
-  #     context: ./back
-  #   container_name: learning-back
-  #   <<: *app
-  #   volumes:
-  #     - ./back:/usr/src/app/
-  #   ports:
-  #     - "8101:8000"
-  #   healthcheck:
-  #     test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/ping"]
-  #     interval: 30s
-  #     timeout: 5s
-  #     retries: 3
-  #     start_period: 5s
-  #   depends_on:
-  #     redis:
-  #       condition: service_healthy
-  #     postgres:
-  #       condition: service_healthy
-
-  # frontend:
-  #   build:
-  #     context: ./front
-  #     target: dev
-  #     args:
-  #       - VITE_LOGGING=${VITE_LOGGING}
-  #       - VITE_AUTH_URL=${VITE_AUTH_URL}
-  #   <<: *app
-  #   container_name: learning-frontend
-  #   volumes:
-  #     - ./front/app/src:/usr/src/app/src
-  #   ports:
-  #     - "8102:5173"
-  #   depends_on:
-  #     backend:
-  #       condition: service_healthy
+  frontend:
+    build:
+      context: ./front
+      target: dev
+      args:
+        - VITE_LOGGING=${VITE_LOGGING}
+        - VITE_BACKEND_URL=${VITE_BACKEND_URL}
+    <<: *app
+    container_name: learning-frontend
+    volumes:
+      - ./front/app/src:/usr/src/app/src
+    ports:
+      - "8302:5173"
+    depends_on:
+      backend:
+        condition: service_started
 
 volumes:
   postgres_volume:
   redis_volume:
+  es_data:
