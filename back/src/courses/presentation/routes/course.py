@@ -4,9 +4,9 @@ from uuid import UUID
 from fastapi import APIRouter, Depends
 from starlette import status
 
-from src.course.application.services import CourseService
-from src.course.application.schemas import CourseCreateSchema, CourseSchema
-from src.course.presentation.dependencies.course import get_course_service
+from src.courses.application.services import CourseService
+from src.courses.application.schemas import CourseCreateSchema, CourseSchema
+from src.courses.presentation.dependencies.course import get_course_service
 
 router = APIRouter()
 
