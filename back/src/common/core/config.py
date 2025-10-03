@@ -4,7 +4,7 @@
 """
 
 from datetime import timedelta
-from typing import List
+from typing import List, Optional
 
 from pydantic import Field
 from pydantic_settings import BaseSettings
@@ -72,15 +72,35 @@ class JWTSettings(BaseSettings):
     refresh_token_expire_time: timedelta = Field(default=timedelta(days=10))
 
 
+class ElasticsearchSettings(BaseSettings):
+    """
+    Конфигурация для настроек Elasticsearch
+    """
+
+    host: str = Field(alias='ELASTICSEARCH_HOST', default='127.0.0.1')
+    port: int = Field(alias='ELASTICSEARCH_PORT', default=9200)
+    username: Optional[str] = Field(alias='ELASTICSEARCH_USERNAME', default=None)
+    password: Optional[str] = Field(alias='ELASTICSEARCH_PASSWORD', default=None)
+    use_ssl: bool = Field(alias='ELASTICSEARCH_USE_SSL', default=False)
+    verify_certs: bool = Field(alias='ELASTICSEARCH_VERIFY_CERTS', default=False)
+
+    @property
+    def url(self) -> str:
+        """Формирует URL для подключения к Elasticsearch"""
+        protocol = "https" if self.use_ssl else "http"
+        return f"{protocol}://{self.host}:{self.port}"
+
+
 class Settings(BaseSettings):
-    project_name: str = Field(alias="PROJECT_NAME", default="Subscription")
+    project_name: str = Field(alias="PROJECT_NAME", default="Smart Learning Platform")
     project_description: str = Field(
-        alias="PROJECT_DESCRIPTION", default="Application for managing subscriptions"
+        alias="PROJECT_DESCRIPTION", default="Платформа для управления учебными курсами"
     )
     jwt: JWTSettings = JWTSettings()
     db: DBSettings = DBSettings()
     redis: RedisSettings = RedisSettings()
     auth: AuthSettings = AuthSettings()
+    elasticsearch: ElasticsearchSettings = ElasticsearchSettings()
     default_host: str = "0.0.0.0"
     default_port: int = 8000
 

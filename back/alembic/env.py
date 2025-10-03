@@ -11,6 +11,12 @@ from src.common.core.config import settings
 from src.common.db.postgres import Base
 from src.auth.infrastructure.persistence.sqlalchemy.models.user import User
 
+# Импорт всех моделей для автогенерации миграций
+from src.courses.infrastructure.sqlalchemy.models import (
+    Course, Lesson, Assignment, Enrollment,
+    LessonProgress, AssignmentSubmission
+)
+
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config

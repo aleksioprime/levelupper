@@ -12,20 +12,30 @@ from src.common.core.config import settings
 from src.common.core.logger import LOGGING
 from src.common.api import ping
 from src.common.exceptions.handlers import register_exception_handlers
+from src.common.elasticsearch import init_elasticsearch, close_elasticsearch
 
 from src.auth.presentation import router as auth_router
-from src.course.presentation import router as course_router
+from src.courses.presentation import router as course_router
+from src.admin import create_admin_app
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
     Управление жизненным циклом приложения FastAPI.
-    Создает подключение к Redis при старте приложения и закрывает его при завершении
+    Создает подключения к Redis и Elasticsearch при старте приложения и закрывает их при завершении.
     """
+    # Инициализация Redis
     redis.redis = Redis(host=settings.redis.host, port=settings.redis.port)
+
+    # Инициализация Elasticsearch
+    await init_elasticsearch()
+
     yield
+
+    # Закрытие соединений
     await redis.redis.close()
+    await close_elasticsearch()
 
 
 # Инициализация FastAPI-приложения
@@ -57,6 +67,9 @@ app.include_router(ping.router, prefix="/api/v1", tags=["ping"])
 app.include_router(auth_router, prefix="/api/v1", tags=["auth"])
 # Подключение роутера для работы с курсами
 app.include_router(course_router, prefix="/api/v1", tags=["courses"])
+
+# Подключение админ-панели SQLAdmin
+admin = create_admin_app(app)
 
 
 # Точка входа в приложение

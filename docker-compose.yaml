@@ -1,59 +1,84 @@
 x-app: &app
   env_file:
     - ./.env
-  restart: always
+  restart: unless-stopped
   platform: linux/amd64
 
 services:
   postgres:
-    image: postgres:14
+    image: postgres:15-alpine
     container_name: learning-postgres
     <<: *app
+    volumes:
+      - postgres_volume:/var/lib/postgresql/data
+      - ./back/postgres:/docker-entrypoint-initdb.d
+    ports:
+      - "8305:5432"
     healthcheck:
-      test: ["CMD-SHELL", "sh -c 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}'"]
-      interval: 5s
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-разработка}"]
+      interval: 10s
       timeout: 5s
       retries: 5
-    volumes:
-      - postgres_volume:/var/lib/postgresql/data/
-      - ./back/postgres/init-multi-db.sh:/docker-entrypoint-initdb.d/init-multi-db.sh
-    environment:
-      TZ: "Europe/Moscow"
-      PGTZ: "Europe/Moscow"
 
   redis:
-    image: redis:6
+    image: redis:7-alpine
     container_name: learning-redis
     <<: *app
+    ports:
+      - "8306:6379"
     volumes:
       - redis_volume:/data
+    command: redis-server --appendonly yes
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 5s
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  elasticsearch:
+    image: elasticsearch:8.13.0
+    container_name: learning-elasticsearch
+    <<: *app
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: 'false'
+      ES_JAVA_OPTS: -Xms512m -Xmx1g
+      # Для разработки - отключаем некоторые проверки
+      bootstrap.memory_lock: 'false'
+    ports:
+      - "8307:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
       retries: 5
 
   airflow-webserver:
     image: apache/airflow:2.9.1-python3.11
-    container_name: airflow-webserver
+    container_name: learning-airflow-webserver
     <<: *app
     depends_on:
-      - postgres
-      - redis
-      - elasticsearch
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
     volumes:
       - ./back/airflow/dags:/opt/airflow/dags
       - ./back/airflow/logs:/opt/airflow/logs
       - ./back/airflow/plugins:/opt/airflow/plugins
       - ./back/airflow/init.sh:/opt/airflow/init.sh
     ports:
-      - 8380:8080
+      - "8308:8080"
     entrypoint: /opt/airflow/init.sh
     command: webserver
 
   airflow-scheduler:
     image: apache/airflow:2.9.1-python3.11
-    container_name: airflow-scheduler
+    container_name: learning-airflow-scheduler
     <<: *app
     depends_on:
       - airflow-webserver
@@ -65,53 +90,53 @@ services:
     entrypoint: /opt/airflow/init.sh
     command: scheduler
 
-  elasticsearch:
-    image: elasticsearch:8.13.0
-    container_name: elasticsearch
-    <<: *app
-    environment:
-      discovery.type: single-node
-      xpack.security.enabled: 'false'
-      ES_JAVA_OPTS: -Xms512m -Xmx512m
-    ports:
-      - 9200:9200
-    volumes:
-      - es_data:/usr/share/elasticsearch/data
-
   backend:
     build:
       context: ./back
     container_name: learning-backend
     <<: *app
-    command: python -m src.main
     volumes:
-      - ./back:/usr/src/app/
+      - ./back:/app
     ports:
-      - "8301:8000"
+      - "8301:8000"  # Learning API порт
     depends_on:
-      redis:
-        condition: service_healthy
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1
+      - ENVIRONMENT=development
+    command: uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload --log-level info
 
   frontend:
     build:
       context: ./front
-      target: dev
       args:
-        - VITE_LOGGING=${VITE_LOGGING}
-        - VITE_BACKEND_URL=${VITE_BACKEND_URL}
+        - VITE_LOGGING=${VITE_LOGGING:-info}
+        - VITE_BACKEND_URL=${VITE_BACKEND_URL:-http://localhost:8301}
     <<: *app
     container_name: learning-frontend
     volumes:
-      - ./front/app/src:/usr/src/app/src
+      - ./front/app:/app
+      - frontend_node_modules:/app/node_modules  # Кеш node_modules
     ports:
-      - "8302:5173"
-    depends_on:
-      backend:
-        condition: service_started
+      - "8302:5173"  # Learning Vite dev server
+      - "8303:80"    # Learning Nginx production
+    environment:
+      - NODE_ENV=development
+      - VITE_API_URL=http://backend:8000
 
 volumes:
   postgres_volume:
+    driver: local
   redis_volume:
+    driver: local
   es_data:
+    driver: local
+  frontend_node_modules:
+    driver: local
