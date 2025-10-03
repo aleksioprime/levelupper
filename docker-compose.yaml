@@ -96,7 +96,7 @@ services:
     container_name: learning-backend
     <<: *app
     volumes:
-      - ./back:/app
+      - ./back:/usr/src/app
     ports:
       - "8301:8000"  # Learning API порт
     depends_on:
@@ -107,7 +107,7 @@ services:
       elasticsearch:
         condition: service_healthy
     environment:
-      - PYTHONPATH=/app
+      - PYTHONPATH=/usr/src/app
       - PYTHONDONTWRITEBYTECODE=1
       - PYTHONUNBUFFERED=1
       - ENVIRONMENT=development

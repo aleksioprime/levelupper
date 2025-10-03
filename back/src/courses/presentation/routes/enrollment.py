@@ -58,8 +58,8 @@ async def get_course_enrollments(
 @router.put("/enrollments/{enrollment_id}/progress", response_model=EnrollmentSchema)
 async def update_enrollment_progress(
     enrollment_id: UUID,
-    progress_percentage: float = Query(..., ge=0, le=100),
     service: Annotated[EnrollmentService, Depends(get_enrollment_service)],
+    progress_percentage: float = Query(..., ge=0, le=100),
 ) -> EnrollmentSchema:
     """Обновление прогресса прохождения курса."""
     return await service.update_progress(enrollment_id, progress_percentage)
@@ -90,8 +90,8 @@ async def complete_lesson(
 async def update_lesson_time(
     enrollment_id: UUID,
     lesson_id: UUID,
-    additional_minutes: int = Query(..., ge=0),
     service: Annotated[LessonProgressService, Depends(get_lesson_progress_service)],
+    additional_minutes: int = Query(..., ge=0),
 ) -> LessonProgressSchema:
     """Обновить время, потраченное на урок."""
     return await service.update_time_spent(enrollment_id, lesson_id, additional_minutes)

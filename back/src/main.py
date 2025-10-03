@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 from fastapi.responses import ORJSONResponse
 from redis.asyncio import Redis
 
@@ -16,8 +17,7 @@ from src.common.elasticsearch import init_elasticsearch, close_elasticsearch
 
 from src.auth.presentation import router as auth_router
 from src.courses.presentation import router as course_router
-from src.admin import create_admin_app
-
+from src.admin import setup_admin
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -60,6 +60,9 @@ app.add_middleware(
     allow_headers=["*"],  # Разрешить все заголовки
 )
 
+# Сессии нужны для работы SQLAdmin AuthenticationBackend
+app.add_middleware(SessionMiddleware, secret_key=settings.jwt.secret_key)
+
 
 # Подключение роутера для проверки доступности сервера
 app.include_router(ping.router, prefix="/api/v1", tags=["ping"])
@@ -68,8 +71,8 @@ app.include_router(auth_router, prefix="/api/v1", tags=["auth"])
 # Подключение роутера для работы с курсами
 app.include_router(course_router, prefix="/api/v1", tags=["courses"])
 
-# Подключение админ-панели SQLAdmin
-admin = create_admin_app(app)
+# Инициализация и подключение административной панели SQLAdmin
+setup_admin(app)
 
 
 # Точка входа в приложение
