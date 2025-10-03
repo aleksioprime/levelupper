@@ -12,6 +12,14 @@ docker-compose -p learning up -d
 docker-compose -p learning up -d --build
 ```
 
+### Создание суперпользователя
+```bash
+docker-compose -p learning exec backend python scripts/create_superuser.py \
+  --username superuser \
+  --password 1q2w3e \
+  --email admin@learning.ru
+```
+
 ### Запуск отдельных сервисов
 ```bash
 # Только база данных и кеш

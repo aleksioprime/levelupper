@@ -1,8 +1,11 @@
 """
 Инициализация SQLAdmin административной панели.
 
-Здесь описана аутентификация для входа в админку и регистрация вьюх.
+Аутентификация для входа в админку и регистрация вьюх.
 """
+
+import uuid
+from typing import Optional
 
 from fastapi import FastAPI
 from sqladmin import Admin
@@ -10,8 +13,21 @@ from sqladmin.authentication import AuthenticationBackend
 from sqlalchemy import select, or_
 from starlette.requests import Request
 
-from src.common.db.postgres import engine, async_session_maker
+from src.common.db.postgres import async_session_maker
 from .models import setup_admin_views
+
+# Константы
+ADMIN_SESSION_DURATION = 8 * 3600  # 8 часов в секундах
+ADMIN_SESSION_PREFIX = "admin_session:"
+
+
+def _get_redis():
+    """Получаем Redis безопасно."""
+    try:
+        from src.common.db.redis import redis
+        return redis
+    except (ImportError, AttributeError):
+        return None
 
 
 class AdminAuth(AuthenticationBackend):
@@ -19,13 +35,11 @@ class AdminAuth(AuthenticationBackend):
 
     - Логин по username или email + паролю.
     - В админку пускаем только superuser.
-    - Состояние сохраняется в session.
+    - Состояние сохраняется в Redis для надежности.
     """
 
-    session_key_user_id = "admin_user_id"
-    session_key_is_superuser = "admin_is_superuser"
-
     async def login(self, request: Request) -> bool:  # type: ignore[override]
+        """Аутентификация пользователя в админке."""
         form = await request.form()
         username_or_email = (form.get("username") or "").strip()
         password = (form.get("password") or "").strip()
@@ -33,7 +47,7 @@ class AdminAuth(AuthenticationBackend):
         if not username_or_email or not password:
             return False
 
-        # Импорт здесь, чтобы избежать циклических зависимостей при инициализации
+        # Импорт здесь, чтобы избежать циклических зависимостей
         from src.auth.infrastructure.persistence.sqlalchemy.models.user import User
 
         async with async_session_maker() as session:
@@ -43,42 +57,99 @@ class AdminAuth(AuthenticationBackend):
                 )
             )
 
-            if not user:
+            if not user or not user.check_password(password) or not getattr(user, "is_superuser", False):
                 return False
 
-            if not user.check_password(password):
-                return False
+            # Сохраняем данные в сессии
+            session_data = {
+                "admin_user_id": str(user.id),
+                "admin_authenticated": True
+            }
 
-            if not getattr(user, "is_superuser", False):
-                return False
+            # Пытаемся сохранить в Redis для надежности
+            redis_client = _get_redis()
+            if redis_client:
+                try:
+                    session_token = str(uuid.uuid4())
+                    await redis_client.set(
+                        f"{ADMIN_SESSION_PREFIX}{session_token}",
+                        str(user.id),
+                        ex=ADMIN_SESSION_DURATION
+                    )
+                    session_data["admin_session_token"] = session_token
+                except Exception:
+                    # Если Redis недоступен, продолжаем без него
+                    pass
 
-            request.session.update({
-                self.session_key_user_id: str(user.id),
-                self.session_key_is_superuser: True,
-            })
+            request.session.update(session_data)
             return True
 
     async def logout(self, request: Request) -> bool:  # type: ignore[override]
+        """Выход из админки."""
+        session_token = request.session.get("admin_session_token")
+        if session_token:
+            redis_client = _get_redis()
+            if redis_client:
+                try:
+                    await redis_client.delete(f"{ADMIN_SESSION_PREFIX}{session_token}")
+                except Exception:
+                    pass  # Игнорируем ошибки Redis при logout
+
         request.session.clear()
         return True
 
-    async def is_authenticated(self, request: Request) -> bool:  # type: ignore[override]
-        return bool(request.session.get(self.session_key_is_superuser) is True)
+    async def authenticate(self, request: Request) -> bool:  # type: ignore[override]
+        """Проверка аутентификации для каждого запроса к админке."""
+        # Сначала проверяем обычную сессию
+        if request.session.get("admin_authenticated") and request.session.get("admin_user_id"):
+            return True
 
+        # Затем проверяем Redis если есть токен
+        session_token = request.session.get("admin_session_token")
+        if session_token:
+            redis_client = _get_redis()
+            if redis_client:
+                try:
+                    user_id = await redis_client.get(f"{ADMIN_SESSION_PREFIX}{session_token}")
+                    if user_id:
+                        return True
+                except Exception:
+                    pass  # Игнорируем ошибки Redis
 
+            # Если токен не найден в Redis, очищаем его из сессии
+            request.session.pop("admin_session_token", None)
+
+        return False
+        """Проверка аутентификации для каждого запроса к админке."""
+        session_token = request.session.get("admin_session_token")
+
+        if session_token:
+            # Проверяем актуальность токена в Redis
+            user_id = await redis.get(f"{ADMIN_SESSION_PREFIX}{session_token}")
+            if user_id:
+                return True
+
+            # Если токен истек, очищаем сессию
+            request.session.clear()
+
+        # Fallback: проверяем наличие user_id в сессии
+        return bool(request.session.get("admin_user_id"))
 def setup_admin(app: FastAPI) -> Admin:
     """Создаёт и регистрирует SQLAdmin для приложения.
 
     Возвращает инстанс Admin, чтобы при необходимости можно было донастроить его снаружи.
     """
+    from src.common.core.config import settings
+
     admin = Admin(
         app,
-        engine=engine,
+        session_maker=async_session_maker,
         base_url="/admin",
-        authentication_backend=AdminAuth(secret_key="sqladmin"),  # secret_key обязателен по API, но для Session используется middleware
+        # Используем тот же secret_key что и для SessionMiddleware
+        authentication_backend=AdminAuth(secret_key=settings.jwt.secret_key),
     )
-
     setup_admin_views(admin)
     return admin
+
 
 __all__ = ["setup_admin"]

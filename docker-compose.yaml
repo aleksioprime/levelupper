@@ -1,6 +1,6 @@
 x-app: &app
   env_file:
-    - ./.env
+    - .env
   restart: unless-stopped
   platform: linux/amd64
 
