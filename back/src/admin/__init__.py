@@ -120,20 +120,7 @@ class AdminAuth(AuthenticationBackend):
             request.session.pop("admin_session_token", None)
 
         return False
-        """Проверка аутентификации для каждого запроса к админке."""
-        session_token = request.session.get("admin_session_token")
 
-        if session_token:
-            # Проверяем актуальность токена в Redis
-            user_id = await redis.get(f"{ADMIN_SESSION_PREFIX}{session_token}")
-            if user_id:
-                return True
-
-            # Если токен истек, очищаем сессию
-            request.session.clear()
-
-        # Fallback: проверяем наличие user_id в сессии
-        return bool(request.session.get("admin_user_id"))
 def setup_admin(app: FastAPI) -> Admin:
     """Создаёт и регистрирует SQLAdmin для приложения.
 
