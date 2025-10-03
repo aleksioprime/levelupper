@@ -34,13 +34,9 @@ class CourseAdmin(SecureModelView, model=Course):
     category = "Обучение"
 
     # Поля для отображения в списке
-    column_list = [Course.id, Course.title, Course.author_id, Course.level, Course.status, Course.is_free, Course.created_at]
+    column_list = ["id", "title", "author_id", "level", "status", "is_free", "created_at"]
     # Поля для поиска
-    column_searchable_list = [Course.title, Course.description]
-    # Фильтры
-    column_filters = [Course.level, Course.status, Course.is_free, Course.created_at]
-    # Сортировка по умолчанию
-    column_default_sort = [(Course.created_at, True)]
+    column_searchable_list = ["title", "description"]
     # Детали формы
     form_columns = [
         Course.title, Course.description, Course.author_id, Course.level,
@@ -59,12 +55,10 @@ class LessonAdmin(SecureModelView, model=Lesson):
     category = "Обучение"
 
     column_list = [
-        Lesson.id, Lesson.title, Lesson.course_id,
-        Lesson.lesson_type, Lesson.status, Lesson.order_index, Lesson.created_at
+        "id", "title", "course_id",
+        "lesson_type", "status", "order_index", "created_at"
     ]
-    column_searchable_list = [Lesson.title, Lesson.content]
-    column_filters = [Lesson.lesson_type, Lesson.status, Lesson.is_free_preview, Lesson.created_at]
-    column_default_sort = [(Lesson.course_id, False), (Lesson.order_index, False)]
+    column_searchable_list = ["title", "content"]
     form_columns = [
         Lesson.course_id, Lesson.title, Lesson.content, Lesson.lesson_type,
         Lesson.status, Lesson.order_index, Lesson.duration_minutes,
@@ -81,12 +75,10 @@ class AssignmentAdmin(SecureModelView, model=Assignment):
     category = "Обучение"
 
     column_list = [
-        Assignment.id, Assignment.title, Assignment.lesson_id,
-        Assignment.assignment_type, Assignment.max_score, Assignment.is_required, Assignment.created_at
+        "id", "title", "lesson_id",
+        "assignment_type", "max_score", "is_required", "created_at"
     ]
-    column_searchable_list = [Assignment.title, Assignment.description]
-    column_filters = [Assignment.assignment_type, Assignment.is_required, Assignment.created_at]
-    column_default_sort = [(Assignment.created_at, True)]
+    column_searchable_list = ["title", "description"]
     form_columns = [
         Assignment.lesson_id, Assignment.title, Assignment.description,
         Assignment.assignment_type, Assignment.questions, Assignment.max_score,
@@ -103,11 +95,9 @@ class EnrollmentAdmin(SecureModelView, model=Enrollment):
     category = "Студенты"
 
     column_list = [
-        Enrollment.id, Enrollment.user_id, Enrollment.course_id,
-        Enrollment.status, Enrollment.progress_percentage, Enrollment.enrolled_at, Enrollment.completed_at
+        "id", "user_id", "course_id",
+        "status", "progress_percentage", "enrolled_at", "completed_at"
     ]
-    column_filters = [Enrollment.status, Enrollment.certificate_issued, Enrollment.enrolled_at]
-    column_default_sort = [(Enrollment.enrolled_at, True)]
     form_columns = [
         Enrollment.user_id, Enrollment.course_id, Enrollment.status,
         Enrollment.progress_percentage, Enrollment.last_accessed_at, Enrollment.certificate_issued
@@ -125,11 +115,9 @@ class LessonProgressAdmin(SecureModelView, model=LessonProgress):
     category = "Студенты"
 
     column_list = [
-        LessonProgress.id, LessonProgress.enrollment_id, LessonProgress.lesson_id,
-        LessonProgress.status, LessonProgress.time_spent_minutes, LessonProgress.started_at
+        "id", "enrollment_id", "lesson_id",
+        "status", "time_spent_minutes", "started_at"
     ]
-    column_filters = [LessonProgress.status, LessonProgress.started_at]
-    column_default_sort = [(LessonProgress.started_at, True)]
     form_columns = [
         LessonProgress.enrollment_id, LessonProgress.lesson_id, LessonProgress.status,
         LessonProgress.time_spent_minutes
@@ -147,12 +135,10 @@ class AssignmentSubmissionAdmin(SecureModelView, model=AssignmentSubmission):
     category = "Студенты"
 
     column_list = [
-        AssignmentSubmission.id, AssignmentSubmission.assignment_id, AssignmentSubmission.enrollment_id,
-        AssignmentSubmission.score, AssignmentSubmission.status, AssignmentSubmission.attempt_number,
-        AssignmentSubmission.submitted_at
+        "id", "assignment_id", "enrollment_id",
+        "score", "status", "attempt_number",
+        "submitted_at"
     ]
-    column_filters = [AssignmentSubmission.status, AssignmentSubmission.submitted_at]
-    column_default_sort = [(AssignmentSubmission.submitted_at, True)]
     form_columns = [
         AssignmentSubmission.assignment_id, AssignmentSubmission.enrollment_id, AssignmentSubmission.answers,
         AssignmentSubmission.score, AssignmentSubmission.status, AssignmentSubmission.feedback,
