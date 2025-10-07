@@ -1,4 +1,6 @@
 
+"""Модели заданий, отправок и ответов студентов"""
+
 from datetime import datetime, date
 from sqlalchemy import String, Text, Boolean, Date, Enum, ForeignKey, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -75,6 +77,11 @@ class Submission(UUIDMixin, TimestampMixin, Base):
         uselist=False,
     )
 
+    comments: Mapped[list["Comment"]] = relationship(
+        back_populates="submission",
+        cascade="all, delete-orphan",
+    )
+
 
 class AnswerSubmission(UUIDMixin, Base):
     """
@@ -101,3 +108,6 @@ class AnswerSubmission(UUIDMixin, Base):
     is_correct: Mapped[bool | None] = mapped_column(Boolean)
 
     submission: Mapped["Submission"] = relationship(back_populates="answers")
+
+
+__all__ = ["Assignment", "Submission", "AnswerSubmission"]

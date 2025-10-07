@@ -1,4 +1,4 @@
-""" """
+"""Модели вопросов, блоков вопросов и вариантов ответов"""
 
 import uuid
 
@@ -37,7 +37,7 @@ class Question(UUIDMixin, TimestampMixin, Base):
     """
     Вопрос внутри блока
     """
-    __tablename__ = "questions"
+    __tablename__ = "assignment_questions"
 
     text: Mapped[str] = mapped_column(Text, nullable=False)
     multiple: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -50,6 +50,11 @@ class Question(UUIDMixin, TimestampMixin, Base):
     block: Mapped["QuestionBlock"] = relationship(back_populates="questions")
 
     options: Mapped[list["AnswerOption"]] = relationship(
+        back_populates="question",
+        cascade="all, delete-orphan",
+    )
+
+    comments: Mapped[list["Comment"]] = relationship(
         back_populates="question",
         cascade="all, delete-orphan",
     )
@@ -69,3 +74,6 @@ class AnswerOption(UUIDMixin, Base):
         nullable=False,
     )
     question: Mapped["Question"] = relationship(back_populates="options")
+
+
+__all__ = ["QuestionBlock", "Question", "AnswerOption"]

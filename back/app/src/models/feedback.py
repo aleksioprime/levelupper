@@ -1,3 +1,5 @@
+"""Модели оценок и комментариев преподавателей"""
+
 from sqlalchemy import ForeignKey, Integer, Text, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from datetime import datetime
@@ -57,9 +59,12 @@ class Comment(UUIDMixin, TimestampMixin, Base):
     submission: Mapped["Submission" | None] = relationship(back_populates="comments")
 
     question_id: Mapped[uuid.UUID | None] = mapped_column(
-        ForeignKey("questions.id", ondelete="CASCADE"),
+        ForeignKey("assignment_questions.id", ondelete="CASCADE"),
     )
     question: Mapped["Question" | None] = relationship(back_populates="comments")
 
     def __repr__(self):
         return f"Комментарий от {self.teacher_id}: {self.text[:40]}"
+
+
+__all__ = ["Grade", "Comment"]
