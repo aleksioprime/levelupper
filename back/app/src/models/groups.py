@@ -4,7 +4,7 @@ from __future__ import annotations
 import uuid
 from datetime import date
 
-from sqlalchemy import  Date, Text, String, ForeignKey, Enum
+from sqlalchemy import Date, Text, String, ForeignKey, Enum, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base, UUIDMixin, TimestampMixin
@@ -48,11 +48,12 @@ class Enrollment(UUIDMixin, Base):
     status: Mapped[EnrollmentStatus] = mapped_column(Enum(EnrollmentStatus), default=EnrollmentStatus.ACTIVE, nullable=False)
     date_start: Mapped[date | None] = mapped_column(Date)
 
+    # Ссылка на пользователя из auth-сервиса (только ID)
     user_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("users.id", ondelete="CASCADE"),
+        Uuid(as_uuid=True),
         nullable=False,
+        comment="ID пользователя из auth-сервиса"
     )
-    user: Mapped["User"] = relationship(back_populates="enrollments", lazy="selectin")
 
     group_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("groups.id", ondelete="CASCADE"),

@@ -59,7 +59,11 @@ class Submission(UUIDMixin, TimestampMixin, Base):
     """
     __tablename__ = "submissions"
 
-    student_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    # ID студента из auth-сервиса
+    student_id: Mapped[uuid.UUID] = mapped_column(
+        nullable=False,
+        comment="ID студента из auth-сервиса"
+    )
     score: Mapped[int | None] = mapped_column(Integer)
     submitted_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
 
