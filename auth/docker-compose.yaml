@@ -1,0 +1,58 @@
+x-app: &app
+  env_file:
+    - .env
+  restart: always
+  platform: linux/amd64
+
+services:
+  postgres:
+    image: postgres:14
+    container_name: levelupper-auth-postgres
+    <<: *app
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "sh -c 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}'",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - postgres_volume:/var/lib/postgresql/data/
+    environment:
+      TZ: "Europe/Moscow"
+      PGTZ: "Europe/Moscow"
+
+  redis:
+    image: redis:6
+    container_name: levelupper-auth-redis
+    <<: *app
+    volumes:
+      - redis_volume:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: ./app
+    container_name: levelupper-auth-app
+    <<: *app
+    command: python src/main.py
+    volumes:
+      - ./app:/usr/src/app/
+    ports:
+      - "8501:8000"
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+
+
+volumes:
+  postgres_volume:
+  redis_volume:
