@@ -28,7 +28,7 @@ CMD ["npm", "run", "dev", "--", "--host"]
 FROM builder AS prod-builder
 RUN npm run build
 
-FROM nginx:latest AS prod
+FROM nginx:1.29 AS prod
 
 RUN apt update && apt install -y certbot python3-certbot-nginx
 RUN mkdir -p /var/www/certbot

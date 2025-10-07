@@ -59,7 +59,7 @@ services:
       - ./back/airflow/plugins:/opt/airflow/plugins
       - ./back/airflow/init.sh:/opt/airflow/init.sh
     ports:
-      - "8308:8080"
+      - "8304:8080"
     entrypoint: /opt/airflow/init.sh
     command: webserver
     depends_on:
@@ -93,7 +93,7 @@ services:
     volumes:
       - ./back:/usr/src/app
     ports:
-      - "8301:8000"
+      - "8302:8000"
     command: python src/main.py
     depends_on:
       postgres:
@@ -114,7 +114,7 @@ services:
     volumes:
       - ./front/app/src:/usr/src/app/src
     ports:
-      - "8302:5173"
+      - "8303:5173"
     depends_on:
       backend:
         condition: service_started
