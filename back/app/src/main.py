@@ -12,7 +12,7 @@ from redis.asyncio import Redis
 from src.core import redis
 from src.core.config import settings
 from src.core.logger import LOGGING
-from src.routes.v1 import router
+from src.api.v1 import router
 from src.exceptions.handlers import register_exception_handlers
 from src.admin import setup_admin
 

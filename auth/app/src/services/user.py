@@ -1,6 +1,7 @@
 import os
 import shutil
 import logging
+from typing import List
 from uuid import UUID
 
 from fastapi import UploadFile, HTTPException
@@ -163,3 +164,25 @@ class UserService:
                     logger.warning(f"Не удалось удалить фото пользователя {user_id}: {e}")
 
             await self.uow.user.update_photo(user_id, None)
+
+    async def get_users_batch(self, user_ids: List[UUID]) -> dict[UUID, UserSchema]:
+        """
+        Получает информацию о нескольких пользователях одним запросом
+        """
+        if not user_ids:
+            return {}
+
+        async with self.uow:
+            users = await self.uow.user.get_users_by_ids(user_ids)
+
+        return {user.id: UserSchema.model_validate(user) for user in users}
+
+    async def check_users_exist(self, user_ids: List[UUID]) -> dict[UUID, bool]:
+        """
+        Проверяет существование пользователей
+        """
+        if not user_ids:
+            return {}
+
+        async with self.uow:
+            return await self.uow.user.check_users_exist(user_ids)

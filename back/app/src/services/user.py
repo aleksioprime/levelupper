@@ -70,20 +70,6 @@ class AuthService:
         user_info = await self.get_user_info(user_id)
         return user_info is not None
 
-    async def get_user_permissions(self, user_id: uuid.UUID) -> List[str]:
-        """Получить права пользователя"""
-        async with httpx.AsyncClient(timeout=self.timeout) as client:
-            try:
-                response = await client.get(
-                    f"{self.auth_service_url}/api/v1/users/{user_id}/permissions"
-                )
-                if response.status_code == 200:
-                    return response.json().get("permissions", [])
-                else:
-                    return []
-            except httpx.RequestError:
-                return []
-
 
 # Синглтон для использования в зависимостях
 auth_service = AuthService()

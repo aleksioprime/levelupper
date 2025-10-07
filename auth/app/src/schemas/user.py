@@ -54,3 +54,32 @@ class UpdatePasswordUserSchema(BaseModel):
     Схема обновления пароля пользователя
     """
     password: str = Field(..., description="Пароль пользователя")
+
+
+class BatchUserRequestSchema(BaseModel):
+    """
+    Схема для батч-запроса пользователей
+    """
+    user_ids: List[UUID] = Field(..., description="Список ID пользователей для получения", max_items=100)
+
+
+class BatchUserResponseSchema(BaseModel):
+    """
+    Схема ответа для батч-запроса пользователей
+    """
+    users: dict[UUID, UserSchema] = Field(..., description="Словарь пользователей, где ключ - ID пользователя")
+    not_found: List[UUID] = Field(default_factory=list, description="Список ID не найденных пользователей")
+
+
+class UserExistsRequestSchema(BaseModel):
+    """
+    Схема для проверки существования пользователей
+    """
+    user_ids: List[UUID] = Field(..., description="Список ID пользователей для проверки", max_items=100)
+
+
+class UserExistsResponseSchema(BaseModel):
+    """
+    Схема ответа для проверки существования пользователей
+    """
+    exists: dict[UUID, bool] = Field(..., description="Словарь существования пользователей")

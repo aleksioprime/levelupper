@@ -73,15 +73,27 @@ class MediaSettings(BaseSettings):
         raise AttributeError(f"No such attribute: {name}")
 
 
+class AuthServiceSettings(BaseSettings):
+    """
+    Конфигурация для взаимодействия с auth-сервисом
+    """
+    url: str = Field(alias='AUTH_SERVICE_URL', default='http://auth:8000')
+    timeout: float = Field(alias='AUTH_SERVICE_TIMEOUT', default=30.0)
+    max_batch_size: int = Field(alias='AUTH_SERVICE_MAX_BATCH_SIZE', default=100)
+    # Опциональные настройки для аутентификации между сервисами
+    service_token: str = Field(alias='AUTH_SERVICE_TOKEN', default='')
+
+
 class Settings(BaseSettings):
-    project_name: str = Field(alias="PROJECT_NAME", default="HyperSpectRus")
+    project_name: str = Field(alias="PROJECT_NAME", default="LevelUpper")
     project_description: str = Field(
-        alias="PROJECT_DESCRIPTION", default="Application for HyperSpectRus"
+        alias="PROJECT_DESCRIPTION", default="Application for LevelUpper"
     )
     jwt: JWTSettings = JWTSettings()
     db: DBSettings = DBSettings()
     redis: RedisSettings = RedisSettings()
     media: MediaSettings = MediaSettings()
+    auth_service: AuthServiceSettings = AuthServiceSettings()
 
     default_host: str = "0.0.0.0"
     default_port: int = 8000

@@ -169,6 +169,95 @@ class Settings(BaseSettings):
     AUTH_SERVICE_TIMEOUT: float = 30.0
 ```
 
+## Новые эндпоинты Auth-сервиса
+
+Для поддержки микросервисной архитектуры в auth-сервис добавлены новые эндпоинты:
+
+### 1. Получение одного пользователя
+```http
+GET /api/v1/users/{user_id}/
+```
+Возвращает информацию о пользователе по ID.
+
+### 2. Батч-получение пользователей
+```http
+POST /api/v1/users/batch/
+Content-Type: application/json
+
+{
+  "user_ids": ["uuid1", "uuid2", "uuid3"]
+}
+```
+Возвращает:
+```json
+{
+  "users": {
+    "uuid1": {
+      "id": "uuid1",
+      "username": "user1",
+      "email": "user1@example.com",
+      ...
+    },
+    "uuid2": { ... }
+  },
+  "not_found": ["uuid3"]
+}
+```
+
+### 3. Проверка существования пользователей
+```http
+POST /api/v1/users/exists/
+Content-Type: application/json
+
+{
+  "user_ids": ["uuid1", "uuid2", "uuid3"]
+}
+```
+Возвращает:
+```json
+{
+  "exists": {
+    "uuid1": true,
+    "uuid2": true,
+    "uuid3": false
+  }
+}
+```
+
+### Ограничения
+- Максимум 100 пользователей в одном батч-запросе
+- Все эндпоинты требуют авторизации
+- Доступны для всех авторизованных пользователей
+
+## Пример использования новых эндпоинтов
+
+```python
+# AuthService обновлен для использования новых эндпоинтов
+class AuthService:
+    async def get_users_info(self, user_ids: List[uuid.UUID]) -> Dict[uuid.UUID, UserInfo]:
+        """Использует POST /api/v1/users/batch/"""
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{self.auth_service_url}/api/v1/users/batch/",
+                json={"user_ids": [str(uid) for uid in user_ids]}
+            )
+            data = response.json()
+            return {
+                uuid.UUID(uid): UserInfo(**user_data)
+                for uid, user_data in data["users"].items()
+            }
+
+    async def verify_users_exist(self, user_ids: List[uuid.UUID]) -> Dict[uuid.UUID, bool]:
+        """Использует POST /api/v1/users/exists/"""
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{self.auth_service_url}/api/v1/users/exists/",
+                json={"user_ids": [str(uid) for uid in user_ids]}
+            )
+            data = response.json()
+            return {uuid.UUID(uid): exists for uid, exists in data["exists"].items()}
+```
+
 ## Миграция существующего кода
 
 1. Удалите все `relationship` с User из моделей
@@ -176,3 +265,4 @@ class Settings(BaseSettings):
 3. Обновите сервисы для работы через AuthService
 4. Добавьте обогащение данных где необходимо
 5. Обновите схемы и эндпоинты
+6. **Деплойте обновленный auth-сервис с новыми эндпоинтами**

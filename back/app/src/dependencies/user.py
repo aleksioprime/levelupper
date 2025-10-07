@@ -4,7 +4,7 @@ from typing import Dict, List, Optional
 import uuid
 from fastapi import Depends, HTTPException, status
 
-from src.services.auth_service import auth_service, UserInfo
+from src.services.user import auth_service, UserInfo
 
 
 async def get_user_info(user_id: uuid.UUID) -> UserInfo:

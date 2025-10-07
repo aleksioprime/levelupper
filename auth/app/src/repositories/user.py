@@ -96,3 +96,28 @@ class UserRepository(BaseUserRepository, BaseSQLRepository):
             .values(photo=photo)
         )
         await self.session.execute(stmt)
+
+    async def get_users_by_ids(self, user_ids: List[UUID]) -> List[User]:
+        """
+        Получает список пользователей по их ID
+        """
+        if not user_ids:
+            return []
+
+        query = select(User).filter(User.id.in_(user_ids))
+        result = await self.session.execute(query)
+        return result.scalars().unique().all()
+
+    async def check_users_exist(self, user_ids: List[UUID]) -> dict[UUID, bool]:
+        """
+        Проверяет существование пользователей по их ID
+        Возвращает словарь {user_id: exists}
+        """
+        if not user_ids:
+            return {}
+
+        query = select(User.id).filter(User.id.in_(user_ids))
+        result = await self.session.execute(query)
+        existing_ids = set(result.scalars().all())
+
+        return {user_id: user_id in existing_ids for user_id in user_ids}
