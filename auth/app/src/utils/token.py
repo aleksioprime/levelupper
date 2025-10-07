@@ -9,7 +9,7 @@ from src.core.config import settings
 from src.models.user import User
 from src.schemas.security import UserJWT
 from src.exceptions.base import BaseException
-from src.utils.time import get_current_utc_time
+from src.utils.time import utc_now
 
 
 class JWTHelper:
@@ -22,7 +22,7 @@ class JWTHelper:
         """
         Создает JWT токен
         """
-        now = get_current_utc_time()
+        now = utc_now()
         payload = {
             'sub': user_id,                 # Идентификатор пользователя
             'iat': now,                     # Время создания токена

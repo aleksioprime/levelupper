@@ -2,12 +2,6 @@
 
 ## Запуск сервиса
 
-Скачайте репозиторий:
-```
-git clone https://github.com/aleksioprime/levelupper.git
-cd aledev
-```
-
 Подготовьте переменные окружения из файла `.env.example`.
 
 Для создания ключей можно воспользоваться одним из способов:
@@ -19,13 +13,12 @@ python3 -c "import secrets; print(''.join(secrets.choice('abcdefghijklmnopqrstuv
 
 Запустите сервис локально:
 ```shell
-cd auth
 docker-compose -p levelupper-auth up -d --build
 ```
 
 Если выходит ошибка `exec /usr/src/app/entrypoint.sh: permission denied`, то нужно вручную установить флаг выполнения для entrypoint.sh в локальной системе:
 ```shell
-chmod +x auth/app/entrypoint.sh
+chmod +x app/entrypoint.sh
 ```
 
 Создание миграциий:
@@ -40,10 +33,10 @@ docker exec -it levelupper-auth-app alembic upgrade head
 
 Проверить базы:
 ```shell
-docker exec -it levelupper-auth-postgres psql -U admin levelupper -c "\dt"
+docker exec -it levelupper-auth-postgres psql -U <пользователь> <база данных> -c "\dt"
 ```
 
 Создание суперпользователя:
 ```shell
-docker-compose -p levelupper-auth exec app python scripts/create_superuser.py --username admin --password Rp2lx3 --email admin@levelupper.ru
+docker-compose -p levelupper-auth exec app python scripts/create_superuser.py --username superuser --password z7JBes --email admin@levelupper.ru
 ```

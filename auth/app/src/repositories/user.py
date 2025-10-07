@@ -5,11 +5,10 @@ import logging
 
 from sqlalchemy import update, select, func
 from sqlalchemy.exc import NoResultFound
-from werkzeug.security import generate_password_hash
 
 from src.models.user import User
 from src.repositories.base import BaseSQLRepository
-from src.schemas.user import UserUpdateSchema, UpdatePasswordUserSchema, UserQueryParams
+from src.schemas.user import UserUpdateSchema, UserQueryParams
 
 logger = logging.getLogger(__name__)
 
@@ -74,12 +73,10 @@ class UserRepository(BaseUserRepository, BaseSQLRepository):
 
         await self.session.delete(result)
 
-    async def update_password(self, user_id: UUID, body: UpdatePasswordUserSchema) -> None:
+    async def update_password(self, user_id: UUID, hashed_password: str) -> None:
         """ Обновляет пароль пользователя по его ID """
-        if not body.password:
+        if not hashed_password:
             raise NoResultFound("Нет данных для обновления")
-
-        hashed_password = generate_password_hash(body.password)
 
         stmt = (
             update(User)

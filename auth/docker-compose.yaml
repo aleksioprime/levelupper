@@ -45,7 +45,7 @@ services:
     volumes:
       - ./app:/usr/src/app/
     ports:
-      - "8501:8000"
+      - "8301:8000"
     depends_on:
       redis:
         condition: service_healthy

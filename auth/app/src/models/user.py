@@ -1,50 +1,41 @@
-import uuid
+"""Модели пользователя"""
 
-from sqlalchemy import Column, DateTime, String, Boolean, func
-from sqlalchemy.dialects.postgresql import UUID
-from werkzeug.security import check_password_hash, generate_password_hash
+from datetime import datetime
 
-from src.core.config import settings
-from src.db.postgres import Base
+from sqlalchemy import  DateTime, String, Boolean
+from sqlalchemy.orm import Mapped, mapped_column
+from werkzeug.security import check_password_hash
+
+from .base import Base, UUIDMixin, TimestampMixin
 
 
-class User(Base):
+class User(UUIDMixin, TimestampMixin, Base):
     """
-    Модель пользователя. Содержит основную информацию о пользователе,
-    а также связанные роли и организацию.
+    Модель пользователя.
+    Содержит основную информацию о пользователе, а также связанные роли
     """
     __tablename__ = 'users'
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
-    username = Column(String(255), unique=True, index=True, nullable=False)
-    hashed_password = Column(String(255), nullable=False)
+    username: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
+    hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
 
-    first_name = Column(String(50))
-    last_name = Column(String(50))
-    email = Column(String(255), unique=True, nullable=False)
-    photo = Column(String(255), nullable=True)
+    first_name: Mapped[str | None] = mapped_column(String(50))
+    last_name: Mapped[str | None] = mapped_column(String(50))
+    email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
+    photo: Mapped[str | None] = mapped_column(String(255))
 
-    is_superuser = Column(Boolean, default=False, nullable=False)
+    tg_username: Mapped[str | None] = mapped_column(String(255))
+    tg_user_id: Mapped[str | None] = mapped_column(String(255))
 
-    last_activity = Column(DateTime(timezone=True), nullable=True)
-    created_at = Column(DateTime(timezone=True), default=func.now())
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    is_admin: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    is_superuser: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
-    def __init__(self, username: str,
-                 password: str,
-                 email: str,
-                 first_name: str = "",
-                 last_name: str = "",
-                 is_superuser: bool = False,
-                 ) -> None:
-        self.username = username
-        self.hashed_password = generate_password_hash(password)
-        self.first_name = first_name
-        self.last_name = last_name
-        self.email = email
-        self.is_superuser = is_superuser
+    last_activity: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     def check_password(self, password: str) -> bool:
+        """Проверка пароля пользователя"""
         return check_password_hash(self.hashed_password, password)
 
     def __repr__(self) -> str:
-        return f'<User {self.username}>'
+        return f"Пользователь: {self.username}"

@@ -1,7 +1,6 @@
 import uvicorn
 import os
 import logging
-import asyncio
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -15,6 +14,7 @@ from src.core.config import settings
 from src.core.logger import LOGGING
 from src.api.v1 import router
 from src.exceptions.handlers import register_exception_handlers
+from src.admin import setup_admin
 
 logger = logging.getLogger(__name__)
 
@@ -57,6 +57,9 @@ app.mount("/media", StaticFiles(directory=os.path.abspath(settings.media.base)),
 
 # Подключение роутера для версии v1
 app.include_router(router, prefix="/api/v1")
+
+# Инициализация и подключение административной панели SQLAdmin
+setup_admin(app)
 
 # Точка входа в приложение
 if __name__ == "__main__":

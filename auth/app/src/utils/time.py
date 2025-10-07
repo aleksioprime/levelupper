@@ -1,7 +1,7 @@
 import datetime
 
 
-def get_current_utc_time() -> datetime.datetime:
+def utc_now() -> datetime.datetime:
     """
     Возвращает текущее UTC время
     """

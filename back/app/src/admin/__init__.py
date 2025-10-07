@@ -5,7 +5,7 @@ from sqladmin import Admin
 from fastapi import FastAPI
 
 from src.core.config import settings
-from src.core.postgres import async_session_maker
+from src.db.postgres import async_session_maker
 from .auth import AdminAuth
 from .models import setup_admin_views
 

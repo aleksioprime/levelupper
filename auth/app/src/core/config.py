@@ -82,6 +82,7 @@ class Settings(BaseSettings):
 
     default_host: str = "0.0.0.0"
     default_port: int = 8000
+    timezone: str = Field(alias="TIMEZONE", default="Europe/Moscow")
 
     cors_allow_origins_str: str = Field(alias="CORS_ALLOW_ORIGINS", default="")
 

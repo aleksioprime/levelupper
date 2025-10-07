@@ -6,6 +6,7 @@ from uuid import UUID
 
 from fastapi import UploadFile, HTTPException
 from sqlalchemy.exc import IntegrityError
+from werkzeug.security import generate_password_hash
 
 from src.core.config import settings
 from src.models.user import User
@@ -56,9 +57,11 @@ class UserService:
         """
         async with self.uow:
             try:
+                hashed_password = generate_password_hash(body.password)
+
                 user = User(
                     username=body.username,
-                    password=body.password,
+                    hashed_password=hashed_password,
                     email=body.email,
                     first_name=body.first_name,
                     last_name=body.last_name,
@@ -106,7 +109,8 @@ class UserService:
         Обновляет пароль пользователя
         """
         async with self.uow:
-            await self.uow.user.update_password(user_id, body)
+            hashed_password = generate_password_hash(body.password)
+            await self.uow.user.update_password(user_id, hashed_password)
 
     async def upload_photo(self, user_id: UUID, file: UploadFile) -> str:
         """

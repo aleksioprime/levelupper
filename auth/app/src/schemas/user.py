@@ -20,6 +20,7 @@ class UserSchema(BaseModel):
     username: Optional[str] = Field(None, description="Логин пользователя")
     email: Optional[str] = Field(None, description="Email пользователя")
     is_superuser: Optional[bool] = Field(..., description="Суперпользователь")
+    is_active: Optional[bool] = Field(..., description="Активен ли пользователь")
     photo: str | None = Field(None, description="Изображение пользователя")
 
     class Config:
