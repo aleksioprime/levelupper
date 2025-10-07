@@ -1,5 +1,5 @@
 """
-Инициализация SQLAdmin административной панели
+Инициализация SQLAdmin административной панели для микросервисной архитектуры
 """
 from sqladmin import Admin
 from fastapi import FastAPI
@@ -10,9 +10,17 @@ from .auth import AdminAuth
 from .models import setup_admin_views
 
 
-def setup_admin(app: FastAPI) -> AdminAuth:
-    """Создаёт и регистрирует SQLAdmin для приложения.
-    Возвращает инстанс Admin, чтобы при необходимости можно было донастроить его снаружи.
+def setup_admin(app: FastAPI) -> Admin:
+    """
+    Создаёт и регистрирует SQLAdmin для приложения.
+
+    Особенности для микросервисной архитектуры:
+    - Аутентификация через auth-сервис
+    - Обогащение данных пользователями через HTTP API
+    - Кэширование токенов в сессии
+
+    Returns:
+        Admin: Инстанс админки для дополнительной настройки
     """
 
     admin = Admin(
@@ -20,8 +28,13 @@ def setup_admin(app: FastAPI) -> AdminAuth:
         session_maker=async_session_maker,
         base_url="/admin",
         authentication_backend=AdminAuth(secret_key=settings.jwt.secret_key),
+        title="LevelUpper Admin",
+        logo_url=None,  # Можно добавить логотип
     )
+
+    # Регистрируем все представления моделей
     setup_admin_views(admin)
+
     return admin
 
 

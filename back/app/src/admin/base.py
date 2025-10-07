@@ -2,10 +2,7 @@
 Дополнительные настройки для улучшения стабильности SQLAdmin
 """
 from datetime import datetime
-import pytz
 from sqladmin import ModelView
-
-from src.core.config import settings
 
 
 # Базовые настройки для всех админ-моделей
@@ -27,12 +24,10 @@ class BaseAdminView(ModelView):
     form_excluded_columns = ["created_at", "updated_at"]
 
     # Настройки для улучшения UX
-    column_default_sort = [("created_at", True)] if hasattr(ModelView, "created_at") else []
+    column_default_sort = [("created_at", True)]
 
     # Отключаем автозагрузку связанных объектов для стабильности
     form_ajax_refs = {}
-
-    tz = pytz.timezone(settings.timezone)
 
     @classmethod
     def get_list_query(cls, request):
@@ -42,11 +37,15 @@ class BaseAdminView(ModelView):
         return query
 
     @staticmethod
-    def _localize_time(value: datetime) -> str:
-        """Конвертирует UTC время в локальное"""
+    def format_datetime(value: datetime) -> str:
+        """Форматирует datetime для отображения"""
         if not value:
             return ""
-        if value.tzinfo is None:
-            value = value.replace(tzinfo=pytz.UTC)
-        local_value = value.astimezone(BaseAdminView.tz)
-        return local_value.strftime("%Y-%m-%d %H:%M:%S")
+        return value.strftime("%Y-%m-%d %H:%M:%S")
+
+    @staticmethod
+    def format_user_id(user_id) -> str:
+        """Форматирует user_id для отображения"""
+        if not user_id:
+            return ""
+        return f"Пользователь {user_id}"
