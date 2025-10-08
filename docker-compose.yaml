@@ -3,11 +3,13 @@ x-app: &app
     - .env
   restart: unless-stopped
   platform: linux/amd64
+  networks:
+    - levelupper-network
 
 services:
   postgres:
     image: postgres:14
-    container_name: learning-postgres
+    container_name: levelupper-postgres
     <<: *app
     volumes:
       - postgres_volume:/var/lib/postgresql/data
@@ -24,7 +26,7 @@ services:
 
   redis:
     image: redis:6
-    container_name: learning-redis
+    container_name: levelupper-redis
     <<: *app
     volumes:
       - redis_volume:/data
@@ -36,7 +38,7 @@ services:
 
   elasticsearch:
     image: elasticsearch:8.13.0
-    container_name: learning-elasticsearch
+    container_name: levelupper-elasticsearch
     <<: *app
     environment:
       - discovery.type=single-node
@@ -51,7 +53,7 @@ services:
 
   airflow-webserver:
     image: apache/airflow:2.9.1-python3.11
-    container_name: learning-airflow-webserver
+    container_name: levelupper-airflow-webserver
     <<: *app
     volumes:
       - ./back/airflow/dags:/opt/airflow/dags
@@ -59,7 +61,6 @@ services:
       - ./back/airflow/plugins:/opt/airflow/plugins
       - ./back/airflow/requirements.txt:/requirements.txt
       - ./back/airflow/init.sh:/opt/airflow/init.sh
-      - ./back:/usr/src/app
     ports:
       - "8304:8080"
     entrypoint: /opt/airflow/init.sh
@@ -74,7 +75,7 @@ services:
 
   airflow-scheduler:
     image: apache/airflow:2.9.1-python3.11
-    container_name: learning-airflow-scheduler
+    container_name: levelupper-airflow-scheduler
     <<: *app
     volumes:
       - ./back/airflow/dags:/opt/airflow/dags
@@ -82,7 +83,6 @@ services:
       - ./back/airflow/plugins:/opt/airflow/plugins
       - ./back/airflow/requirements.txt:/requirements.txt
       - ./back/airflow/init.sh:/opt/airflow/init.sh
-      - ./back:/usr/src/app
     entrypoint: /opt/airflow/init.sh
     command: scheduler
     depends_on:
@@ -91,11 +91,11 @@ services:
 
   backend:
     build:
-      context: ./back
-    container_name: learning-backend
+      context: ./back/app
+    container_name: levelupper-backend
     <<: *app
     volumes:
-      - ./back:/usr/src/app
+      - ./back/app:/usr/src/app
     ports:
       - "8302:8000"
     command: python src/main.py
@@ -112,9 +112,10 @@ services:
       context: ./front
       args:
         - VITE_LOGGING=${VITE_LOGGING:-1}
-        - VITE_BACKEND_URL=${VITE_BACKEND_URL:-http://localhost:8301}
+        - VITE_AUTH_URL=${VITE_AUTH_URL:-http://localhost:8301}
+        - VITE_BACKEND_URL=${VITE_BACKEND_URL:-http://localhost:8302}
     <<: *app
-    container_name: learning-frontend
+    container_name: levelupper-frontend
     volumes:
       - ./front/app/src:/usr/src/app/src
     ports:
@@ -130,3 +131,7 @@ volumes:
     driver: local
   es_volume:
     driver: local
+
+networks:
+  levelupper-network:
+    driver: bridge
