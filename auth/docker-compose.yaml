@@ -3,6 +3,8 @@ x-app: &app
     - .env
   restart: always
   platform: linux/amd64
+  networks:
+    - levelupper-network
 
 services:
   postgres:
@@ -56,3 +58,7 @@ services:
 volumes:
   postgres_volume:
   redis_volume:
+
+networks:
+  levelupper-network:
+    driver: bridge

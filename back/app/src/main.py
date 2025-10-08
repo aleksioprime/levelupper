@@ -65,7 +65,7 @@ setup_admin(app)
 if __name__ == "__main__":
     # Запуск Uvicorn-сервера
     uvicorn.run(
-        "main:app",  # Указание приложения (main.py:app)
+        "src.main:app",  # Указание приложения (src.main:app)
         host=settings.default_host,  # Хост из настроек
         port=settings.default_port,  # Порт из настроек
         log_config=LOGGING,  # Конфигурация логирования

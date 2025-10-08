@@ -1,10 +1,14 @@
 """
 Аутентификация для административной панели с использованием auth-сервиса
 """
+import logging
 import uuid
 import httpx
 from sqladmin.authentication import AuthenticationBackend
 from starlette.requests import Request
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 from src.core.config import settings
 
@@ -23,13 +27,17 @@ class AuthServiceClient:
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 # Предполагаем, что есть эндпоинт для аутентификации с логином/паролем
+                logger.info(f"Authenticating user: {username_or_email}. Auth URL: {self.auth_url}/api/v1/auth/login")
+
                 response = await client.post(
-                    f"{self.auth_url}/api/v1/auth/login",
+                    f"{self.auth_url}/api/v1/auth/login/",
                     json={
                         "username": username_or_email,
                         "password": password
                     }
                 )
+
+                logger.info(f"Response status code: {response.status_code}")
 
                 if response.status_code == 200:
                     user_data = response.json()
