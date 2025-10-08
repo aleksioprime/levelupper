@@ -84,7 +84,7 @@ class CourseTopic(UUIDMixin, TimestampMixin, Base):
         ForeignKey("course_topics.id", ondelete="CASCADE"),
         nullable=True,
     )
-    parent: Mapped["CourseTopic" | None] = relationship(
+    parent: Mapped["CourseTopic"] = relationship(
         back_populates="subtopics",
         remote_side="CourseTopic.id",
     )

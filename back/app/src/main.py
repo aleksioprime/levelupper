@@ -9,7 +9,7 @@ from fastapi.responses import ORJSONResponse
 from fastapi.staticfiles import StaticFiles
 from redis.asyncio import Redis
 
-from src.core import redis
+from src.db import redis
 from src.core.config import settings
 from src.core.logger import LOGGING
 from src.api.v1 import router

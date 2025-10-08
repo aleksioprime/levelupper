@@ -110,6 +110,7 @@ services:
   frontend:
     build:
       context: ./front
+      target: dev
       args:
         - VITE_LOGGING=${VITE_LOGGING:-1}
         - VITE_AUTH_URL=${VITE_AUTH_URL:-http://localhost:8301}

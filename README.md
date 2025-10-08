@@ -100,63 +100,36 @@ cp .env.example .env
 
 # Настройки для auth сервиса
 cp auth/.env.example auth/.env
-
-# Отредактируйте необходимые параметры
-nano .env
-nano auth/.env
 ```
 
-#### Основные переменные (.env)
-```bash
-# PostgreSQL
-POSTGRES_USER=learning_user
-POSTGRES_PASSWORD=learning_password
-POSTGRES_DB=learning_db
-
-# Redis
-REDIS_URL=redis://redis:6379
-
-# Airflow
-AIRFLOW_ADMIN_USERNAME=admin
-AIRFLOW_ADMIN_PASSWORD=admin
-AIRFLOW_ADMIN_EMAIL=admin@example.com
-```
-
-#### Auth сервис (auth/.env)
-```bash
-# JWT
-SECRET_KEY=your-secret-key-here
-ACCESS_TOKEN_EXPIRE_MINUTES=30
-
-# Database (использует основную БД с префиксом)
-DATABASE_URL=postgresql+asyncpg://learning_user:learning_password@postgres:5432/learning_db
-```
+Отредактируйте необходимые параметры
 
 ### 3. Запуск всех сервисов
 ```bash
 # Запустите все сервисы платформы
-docker-compose up -d --build
+docker-compose -p levelupper up -d --build
 
 # Проверьте статус всех контейнеров
-docker-compose ps
+docker-compose -p levelupper ps
 ```
 
 ### 4. Инициализация базы данных
+
+Создание миграциий:
+```shell
+docker-compose -p levelupper exec backend  alembic revision --autogenerate -m "init migration"
+```
+
+Применение миграции (при перезапуске сервиса делается автоматически):
 ```bash
 # Примените миграции для основного сервиса
-docker-compose exec backend alembic upgrade head
-
-# Примените миграции для auth сервиса
-docker-compose exec -w /usr/src/app auth-backend alembic upgrade head
-
-# Создайте суперпользователя в auth сервисе
-docker-compose exec auth-backend python scripts/create_superuser.py --username admin --password admin123 --email admin@example.com
+docker-compose -p levelupper exec backend alembic upgrade head
 ```
 
 ### 5. Инициализация Elasticsearch
 ```bash
 # Создайте индексы Elasticsearch
-docker-compose exec backend python -c "
+docker-compose -p levelupper exec backend python -c "
 import asyncio
 from src.elasticsearch.models import create_indices
 asyncio.run(create_indices())

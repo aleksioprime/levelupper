@@ -48,12 +48,12 @@ class Comment(UUIDMixin, TimestampMixin, Base):
     submission_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("submissions.id", ondelete="CASCADE"),
     )
-    submission: Mapped["Submission" | None] = relationship(back_populates="comments")
+    submission: Mapped["Submission"] = relationship(back_populates="comments")
 
     question_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("assignment_questions.id", ondelete="CASCADE"),
     )
-    question: Mapped["Question" | None] = relationship(back_populates="comments")
+    question: Mapped["Question"] = relationship(back_populates="comments")
 
     def __repr__(self):
         return f"Комментарий от {self.teacher_id}: {self.text[:40]}"

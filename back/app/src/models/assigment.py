@@ -31,13 +31,13 @@ class Assignment(UUIDMixin, TimestampMixin, Base):
         ForeignKey("course_topics.id", ondelete="CASCADE"),
         nullable=True,
     )
-    topic: Mapped["CourseTopic" | None] = relationship(back_populates="assignments")
+    topic: Mapped["CourseTopic"] = relationship(back_populates="assignments")
 
     lesson_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("lessons.id", ondelete="CASCADE"),
         nullable=True,
     )
-    lesson: Mapped["Lesson" | None] = relationship(back_populates="assignments")
+    lesson: Mapped["Lesson"] = relationship(back_populates="assignments")
 
     question_blocks: Mapped[list["QuestionBlock"]] = relationship(
         back_populates="assignment",
@@ -73,7 +73,7 @@ class Submission(UUIDMixin, TimestampMixin, Base):
         cascade="all, delete-orphan",
     )
 
-    grade: Mapped["Grade" | None] = relationship(
+    grade: Mapped["Grade"] = relationship(
         back_populates="submission",
         cascade="all, delete-orphan",
         uselist=False,
