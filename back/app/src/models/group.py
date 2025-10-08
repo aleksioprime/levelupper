@@ -4,7 +4,7 @@ from __future__ import annotations
 import uuid
 from datetime import date
 
-from sqlalchemy import Date, Text, String, ForeignKey, Enum, Uuid
+from sqlalchemy import Date, Text, String, ForeignKey, Enum, Uuid, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base, UUIDMixin, TimestampMixin
@@ -43,6 +43,9 @@ class Enrollment(UUIDMixin, Base):
     Определяет его роль, статус и период участия
     """
     __tablename__ = "enrollments"
+    __table_args__ = (
+        UniqueConstraint('user_id', 'group_id', name='uq_user_group'),
+    )
 
     role: Mapped[EnrollmentRole] = mapped_column(Enum(EnrollmentRole), nullable=False)
     status: Mapped[EnrollmentStatus] = mapped_column(Enum(EnrollmentStatus), default=EnrollmentStatus.ACTIVE, nullable=False)

@@ -5,7 +5,7 @@ from __future__ import annotations
 import uuid
 from datetime import date
 
-from sqlalchemy import Text, String, ForeignKey, Integer, Date
+from sqlalchemy import Text, String, ForeignKey, Integer, Date, Uuid, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base, UUIDMixin, TimestampMixin
@@ -31,8 +31,36 @@ class Course(UUIDMixin, TimestampMixin, Base):
         cascade="all, delete-orphan",
     )
 
+    moderators: Mapped[list["CourseModerator"]] = relationship(
+        back_populates="course",
+        cascade="all, delete-orphan",
+    )
+
     def __repr__(self) -> str:
         return f"Курс {self.title}"
+
+
+class CourseModerator(UUIDMixin, TimestampMixin, Base):
+    """
+    Модель модератора курса.
+    Связывает курс с пользователем из auth сервиса
+    """
+    __tablename__ = "course_moderators"
+    __table_args__ = (
+        UniqueConstraint('course_id', 'user_id', name='uq_course_moderator'),
+    )
+
+    course_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("courses.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    course: Mapped["Course"] = relationship(back_populates="moderators")
+
+    # ID пользователя из auth сервиса
+    user_id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), nullable=False)
+
+    def __repr__(self) -> str:
+        return f"Модератор {self.user_id} курса {self.course.title}"
 
 
 class CourseTopic(UUIDMixin, TimestampMixin, Base):
@@ -108,4 +136,4 @@ class Lesson(UUIDMixin, TimestampMixin, Base):
         return f"Урок: {self.title}"
 
 
-__all__ = ["Course", "CourseTopic", "Lesson"]
+__all__ = ["Course", "CourseModerator", "CourseTopic", "Lesson"]
