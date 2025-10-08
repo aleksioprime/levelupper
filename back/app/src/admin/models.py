@@ -4,12 +4,14 @@ SQLAdmin модели для административной панели
 from sqladmin import Admin
 from .views import (
     CourseAdminView,
+    CourseModeratorAdminView,
     CourseTopicAdminView,
     LessonAdminView,
     GroupAdminView,
     EnrollmentAdminView,
     AssignmentAdminView,
     SubmissionAdminView,
+    AnswerSubmissionAdminView,
     QuestionBlockAdminView,
     QuestionAdminView,
     AnswerOptionAdminView,
@@ -24,6 +26,7 @@ def setup_admin_views(admin: Admin):
 
     # Курсы и обучение
     admin.add_view(CourseAdminView)
+    admin.add_view(CourseModeratorAdminView)
     admin.add_view(CourseTopicAdminView)
     admin.add_view(LessonAdminView)
 
@@ -34,6 +37,7 @@ def setup_admin_views(admin: Admin):
     # Задания и тестирование
     admin.add_view(AssignmentAdminView)
     admin.add_view(SubmissionAdminView)
+    admin.add_view(AnswerSubmissionAdminView)
     admin.add_view(QuestionBlockAdminView)
     admin.add_view(QuestionAdminView)
     admin.add_view(AnswerOptionAdminView)

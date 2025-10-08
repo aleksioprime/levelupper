@@ -70,7 +70,7 @@ class AnswerOption(UUIDMixin, Base):
     is_correct: Mapped[bool] = mapped_column(Boolean, default=False)
 
     question_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("questions.id", ondelete="CASCADE"),
+        ForeignKey("assignment_questions.id", ondelete="CASCADE"),
         nullable=False,
     )
     question: Mapped["Question"] = relationship(back_populates="options")

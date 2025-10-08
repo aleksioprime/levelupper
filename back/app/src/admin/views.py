@@ -10,7 +10,7 @@ from starlette.requests import Request
 
 from .base import BaseAdminView
 from src.models import (
-    Course, CourseTopic, Lesson,
+    Course, CourseModerator, CourseTopic, Lesson,
     Group, Enrollment,
     Assignment, Submission, AnswerSubmission,
     QuestionBlock, Question, AnswerOption,
@@ -75,19 +75,58 @@ class CourseAdminView(BaseAdminView, model=Course):
     column_list = [Course.id, Course.title, Course.description, Course.created_at]
     column_searchable_list = [Course.title]
     column_sortable_list = [Course.title, Course.created_at]
-    column_details_exclude_list = ["groups", "topics"]
+    column_details_exclude_list = ["groups", "topics", "moderators"]
 
     name = "Курс"
     name_plural = "Курсы"
     icon = "fa-solid fa-book"
 
 
+class CourseModeratorAdminView(BaseAdminView, AuthServiceMixin, model=CourseModerator):
+    """Админка для модераторов курсов"""
+
+    column_list = [CourseModerator.id, "user_info", CourseModerator.course_id, CourseModerator.created_at]
+    column_searchable_list = [CourseModerator.user_id]
+    column_sortable_list = [CourseModerator.created_at]
+
+    name = "Модератор курса"
+    name_plural = "Модераторы курсов"
+    icon = "fa-solid fa-user-shield"
+
+    async def list(self, request: Request) -> Any:
+        """Переопределяем список для обогащения данными пользователей"""
+        result = await super().list(request)
+
+        # Обогащаем данные пользователей
+        if hasattr(result, 'data') and result.data:
+            data_list = []
+            for item in result.data:
+                item_dict = item.__dict__.copy() if hasattr(item, '__dict__') else dict(item)
+                data_list.append(item_dict)
+
+            enriched_data = await self.enrich_with_user_info(data_list, "user_id")
+
+            # Обновляем результат
+            for i, item in enumerate(result.data):
+                if i < len(enriched_data):
+                    item.user_info = enriched_data[i].get("user_id_info", "")
+
+        return result
+
+
 class CourseTopicAdminView(BaseAdminView, model=CourseTopic):
     """Админка для тем курсов"""
 
-    column_list = [CourseTopic.id, CourseTopic.title, CourseTopic.course_id, CourseTopic.order]
+    column_list = [
+        CourseTopic.id,
+        CourseTopic.title,
+        CourseTopic.course_id,
+        CourseTopic.parent_id,
+        CourseTopic.order
+    ]
     column_searchable_list = [CourseTopic.title]
     column_sortable_list = [CourseTopic.title, CourseTopic.order, CourseTopic.created_at]
+    column_details_exclude_list = ["subtopics", "lessons", "assignments"]
 
     name = "Тема курса"
     name_plural = "Темы курсов"
@@ -100,6 +139,7 @@ class LessonAdminView(BaseAdminView, model=Lesson):
     column_list = [Lesson.id, Lesson.title, Lesson.topic_id, Lesson.order, Lesson.date]
     column_searchable_list = [Lesson.title]
     column_sortable_list = [Lesson.title, Lesson.order, Lesson.date]
+    column_details_exclude_list = ["assignments"]
 
     name = "Урок"
     name_plural = "Уроки"
@@ -113,6 +153,7 @@ class GroupAdminView(BaseAdminView, model=Group):
     column_list = [Group.id, Group.name, Group.course_id, Group.moodle_group_id]
     column_searchable_list = [Group.name, Group.moodle_group_id]
     column_sortable_list = [Group.name, Group.created_at]
+    column_details_exclude_list = ["enrollments"]
 
     name = "Группа"
     name_plural = "Группы"
@@ -122,9 +163,10 @@ class GroupAdminView(BaseAdminView, model=Group):
 class EnrollmentAdminView(BaseAdminView, AuthServiceMixin, model=Enrollment):
     """Админка для записей в группы"""
 
-    column_list = [Enrollment.id, "user_info", Enrollment.group_id, Enrollment.role, Enrollment.status]
+    column_list = [Enrollment.id, "user_info", Enrollment.group_id, Enrollment.role, Enrollment.status, Enrollment.date_start]
     column_searchable_list = [Enrollment.user_id]
     column_sortable_list = [Enrollment.role, Enrollment.status, Enrollment.date_start]
+    column_details_exclude_list = ["progress"]
 
     name = "Запись в группу"
     name_plural = "Записи в группы"
@@ -155,9 +197,19 @@ class EnrollmentAdminView(BaseAdminView, AuthServiceMixin, model=Enrollment):
 class AssignmentAdminView(BaseAdminView, model=Assignment):
     """Админка для заданий"""
 
-    column_list = [Assignment.id, Assignment.title, Assignment.type, Assignment.max_score, Assignment.due_date]
+    column_list = [
+        Assignment.id,
+        Assignment.title,
+        Assignment.type,
+        Assignment.max_score,
+        Assignment.max_attempts,
+        Assignment.due_date,
+        Assignment.topic_id,
+        Assignment.lesson_id
+    ]
     column_searchable_list = [Assignment.title]
     column_sortable_list = [Assignment.title, Assignment.type, Assignment.due_date, Assignment.created_at]
+    column_details_exclude_list = ["question_blocks", "submissions"]
 
     name = "Задание"
     name_plural = "Задания"
@@ -169,6 +221,7 @@ class SubmissionAdminView(BaseAdminView, AuthServiceMixin, model=Submission):
 
     column_list = [Submission.id, "student_info", Submission.assignment_id, Submission.score, Submission.submitted_at]
     column_sortable_list = [Submission.score, Submission.submitted_at]
+    column_details_exclude_list = ["answers", "grade", "comments"]
 
     name = "Отправка задания"
     name_plural = "Отправки заданий"
@@ -199,6 +252,7 @@ class QuestionBlockAdminView(BaseAdminView, model=QuestionBlock):
     column_list = [QuestionBlock.id, QuestionBlock.title, QuestionBlock.assignment_id, QuestionBlock.order]
     column_searchable_list = [QuestionBlock.title]
     column_sortable_list = [QuestionBlock.title, QuestionBlock.order]
+    column_details_exclude_list = ["questions"]
 
     name = "Блок вопросов"
     name_plural = "Блоки вопросов"
@@ -211,6 +265,7 @@ class QuestionAdminView(BaseAdminView, model=Question):
     column_list = [Question.id, Question.text, Question.block_id, Question.multiple, Question.order]
     column_searchable_list = [Question.text]
     column_sortable_list = [Question.order, Question.multiple]
+    column_details_exclude_list = ["options", "comments"]
 
     name = "Вопрос"
     name_plural = "Вопросы"
@@ -310,3 +365,20 @@ class ProgressAdminView(BaseAdminView, model=Progress):
     name = "Прогресс обучения"
     name_plural = "Прогресс обучения"
     icon = "fa-solid fa-chart-line"
+
+
+class AnswerSubmissionAdminView(BaseAdminView, model=AnswerSubmission):
+    """Админка для ответов студентов"""
+
+    column_list = [
+        AnswerSubmission.id,
+        AnswerSubmission.submission_id,
+        AnswerSubmission.question_id,
+        AnswerSubmission.answer_id,
+        AnswerSubmission.is_correct
+    ]
+    column_sortable_list = [AnswerSubmission.is_correct]
+
+    name = "Ответ студента"
+    name_plural = "Ответы студентов"
+    icon = "fa-solid fa-edit"

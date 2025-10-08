@@ -13,7 +13,7 @@ from .base import Base, UUIDMixin, TimestampMixin
 from .progress import Progress
 
 # Модели курсов и структуры обучения
-from .course import Course, CourseTopic, Lesson
+from .course import Course, CourseModerator, CourseTopic, Lesson
 
 # Модели групп и записей
 from .group import Group, Enrollment
@@ -39,6 +39,7 @@ __all__ = [
 
     # Курсы и обучение
     "Course",
+    "CourseModerator",
     "CourseTopic",
     "Lesson",
 
