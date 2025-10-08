@@ -7,7 +7,7 @@ from sqlalchemy import update, select
 from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import NoResultFound
 
-from src.models.course import Course, CourseTopic
+from src.models.course import Course, CourseTopic, CourseModerator
 from src.schemas.course import CourseUpdateSchema
 
 
@@ -18,7 +18,7 @@ class CourseRepository:
 
     async def get_all(self) -> list[Course]:
         """ Получает список всех курсов """
-        query = select(Course).order_by(Course.name.asc())
+        query = select(Course).order_by(Course.title.asc())
         result = await self.session.execute(query)
         return result.scalars().all()
 
@@ -33,7 +33,8 @@ class CourseRepository:
         query = (
             select(Course)
             .options(
-                joinedload(Course.topics).joinedload(CourseTopic.subtopics)
+                joinedload(Course.topics).joinedload(CourseTopic.subtopics),
+                joinedload(Course.moderators)
             )
             .where(Course.id == course_id)
         )

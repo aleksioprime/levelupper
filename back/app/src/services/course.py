@@ -5,7 +5,8 @@ from sqlalchemy.exc import IntegrityError, NoResultFound
 
 from src.exceptions.base import BaseException
 from src.repositories.uow import UnitOfWork
-from src.schemas.course import CourseSchema, CourseUpdateSchema, CourseDetailSchema
+from src.schemas.course import CourseSchema, CourseUpdateSchema, CourseDetailSchema, CourseCreateSchema
+from src.schemas.moderator import ModeratorSchema, ModeratorListSchema
 
 
 class CourseService:
@@ -34,7 +35,7 @@ class CourseService:
                 raise BaseException(f"Курс с ID {course_id} не найден")
         return course
 
-    async def create(self, body: CourseUpdateSchema) -> CourseSchema:
+    async def create(self, body: CourseCreateSchema) -> CourseSchema:
         """
         Создаёт новый курс
         """
@@ -66,3 +67,48 @@ class CourseService:
                 await self.uow.course.delete(course_id)
             except NoResultFound as exc:
                 raise BaseException(f"Курс с ID {course_id} не найден") from exc
+
+    async def add_moderator(self, course_id: UUID, user_id: UUID) -> ModeratorSchema:
+        """
+        Добавляет модератора к курсу
+        """
+        async with self.uow:
+            try:
+                course = await self.uow.course.get_by_id(course_id)
+                if not course:
+                    raise BaseException(f"Курс с ID {course_id} не найден")
+
+                moderator = await self.uow.course_moderator.add_moderator(course_id, user_id)
+                return ModeratorSchema.model_validate(moderator)
+            except IntegrityError as exc:
+                raise BaseException("Пользователь уже является модератором этого курса") from exc
+
+    async def remove_moderator(self, course_id: UUID, user_id: UUID) -> None:
+        """
+        Удаляет модератора курса
+        """
+        async with self.uow:
+            try:
+                await self.uow.course_moderator.remove_moderator(course_id, user_id)
+            except NoResultFound as exc:
+                raise BaseException(f"Модератор не найден") from exc
+
+    async def get_course_moderators(self, course_id: UUID) -> ModeratorListSchema:
+        """
+        Получает список модераторов курса
+        """
+        async with self.uow:
+            course = await self.uow.course.get_by_id(course_id)
+            if not course:
+                raise BaseException(f"Курс с ID {course_id} не найден")
+
+            moderators = await self.uow.course_moderator.get_course_moderators(course_id)
+            moderator_schemas = [ModeratorSchema.model_validate(mod) for mod in moderators]
+            return ModeratorListSchema(moderators=moderator_schemas)
+
+    async def is_course_moderator(self, course_id: UUID, user_id: UUID) -> bool:
+        """
+        Проверяет, является ли пользователь модератором курса
+        """
+        async with self.uow:
+            return await self.uow.course_moderator.is_course_moderator(course_id, user_id)

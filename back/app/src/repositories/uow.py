@@ -3,6 +3,8 @@
 from src.db.postgres import async_session_maker
 from src.repositories.course import CourseRepository
 from src.repositories.group import GroupRepository
+from src.repositories.moderator import ModeratorRepository
+from src.repositories.enrollment import EnrollmentRepository
 
 
 class UnitOfWork:
@@ -13,6 +15,8 @@ class UnitOfWork:
         self.session = self.session_factory()
         self.course = CourseRepository(self.session)
         self.group = GroupRepository(self.session)
+        self.moderator = ModeratorRepository(self.session)
+        self.enrollment = EnrollmentRepository(self.session)
 
     async def __aexit__(self, exc_type, exc_value, traceback):
         if exc_type is not None:
