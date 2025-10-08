@@ -11,11 +11,3 @@ class AuthSchema(BaseModel):
 
     username: str = Field(..., description="Логин пользователя")
     password: str = Field(..., description="Пароль пользователя")
-
-
-class UserJWT(BaseModel):
-    """
-    Схема для представления данных пользователя в JWT
-    """
-    id: UUID = Field(..., description="Уникальный идентификатор пользователя")
-    is_superuser: bool = False

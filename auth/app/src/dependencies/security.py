@@ -14,6 +14,7 @@ def permission_required(
         user: UserJWT = Depends(JWTBearer()),
         request: Request = None,
     ):
+
         if getattr(user, "is_superuser", False):
             return user
 

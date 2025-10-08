@@ -86,6 +86,8 @@ class Settings(BaseSettings):
 
     cors_allow_origins_str: str = Field(alias="CORS_ALLOW_ORIGINS", default="")
 
+    service_token: str = Field(alias="AUTH_SERVICE_TOKEN", default="")
+
     @property
     def cors_allow_origins(self) -> List[str]:
         """Преобразует строку cors_allow_origins_str в список"""

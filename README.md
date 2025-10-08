@@ -105,6 +105,12 @@ cp auth/.env.example auth/.env
 Отредактируйте необходимые параметры
 
 ### 3. Запуск всех сервисов
+
+Создайте сеть
+```sh
+docker network create levelupper-network
+```
+
 ```bash
 # Запустите все сервисы платформы
 docker-compose -p levelupper up -d --build
@@ -117,7 +123,7 @@ docker-compose -p levelupper ps
 
 Создание миграциий:
 ```shell
-docker-compose -p levelupper exec backend  alembic revision --autogenerate -m "init migration"
+docker-compose -p levelupper exec backend alembic revision --autogenerate -m "init migration"
 ```
 
 Применение миграции (при перезапуске сервиса делается автоматически):

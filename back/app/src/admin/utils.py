@@ -70,10 +70,16 @@ async def get_users_info_cached(user_ids: List[str]) -> Dict[str, Dict]:
     # Запрашиваем недостающих пользователей
     if missing_ids:
         try:
+            headers = {}
+            # Добавляем service token для межсервисной аутентификации, если он настроен
+            if settings.auth_service.service_token:
+                headers["Authorization"] = f"Bearer {settings.auth_service.service_token}"
+
             async with httpx.AsyncClient(timeout=settings.auth_service.timeout) as client:
                 response = await client.post(
                     f"{settings.auth_service.url}/api/v1/users/batch/",
-                    json={"user_ids": missing_ids}
+                    json={"user_ids": missing_ids},
+                    headers=headers
                 )
 
                 if response.status_code == 200:

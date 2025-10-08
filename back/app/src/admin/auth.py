@@ -1,99 +1,15 @@
 """
-Аутентификация для административной панели с использованием auth-сервиса
+Аутентификация для административной панели
 """
 import logging
-import uuid
-import httpx
+from typing import Optional, Dict
+
 from sqladmin.authentication import AuthenticationBackend
 from starlette.requests import Request
 
-logging.basicConfig(level=logging.INFO)
+from .client import AuthServiceClient
+
 logger = logging.getLogger(__name__)
-
-from src.core.config import settings
-
-
-class AuthServiceClient:
-    """Клиент для взаимодействия с auth-сервисом"""
-
-    def __init__(self):
-        self.auth_url = settings.auth_service.url
-        self.timeout = settings.auth_service.timeout
-
-    async def authenticate_user(self, username_or_email: str, password: str) -> dict | None:
-        """
-        Аутентифицирует пользователя через auth-сервис
-        """
-        try:
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
-                # Предполагаем, что есть эндпоинт для аутентификации с логином/паролем
-                logger.info(f"Authenticating user: {username_or_email}. Auth URL: {self.auth_url}/api/v1/auth/login")
-
-                response = await client.post(
-                    f"{self.auth_url}/api/v1/auth/login/",
-                    json={
-                        "username": username_or_email,
-                        "password": password
-                    }
-                )
-
-                logger.info(f"Response status code: {response.status_code}")
-
-                if response.status_code == 200:
-                    user_data = response.json()
-                    # Проверяем права суперпользователя
-                    if user_data.get("is_superuser", False):
-                        return user_data
-
-                return None
-
-        except (httpx.RequestError, httpx.TimeoutException):
-            return None
-
-    async def get_user_info(self, user_id: str) -> dict | None:
-        """
-        Получает информацию о пользователе по ID
-        """
-        try:
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
-                response = await client.get(
-                    f"{self.auth_url}/api/v1/users/{user_id}/",
-                    # Здесь может потребоваться добавить заголовки авторизации
-                    # headers={"Authorization": f"Bearer {service_token}"}
-                )
-
-                if response.status_code == 200:
-                    user_data = response.json()
-                    # Проверяем права суперпользователя и активность
-                    if (user_data.get("is_superuser", False) and
-                        user_data.get("is_active", True)):
-                        return user_data
-
-                return None
-
-        except (httpx.RequestError, httpx.TimeoutException):
-            return None
-
-    async def verify_token(self, token: str) -> dict | None:
-        """
-        Проверяет JWT токен через auth-сервис
-        """
-        try:
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
-                response = await client.get(
-                    f"{self.auth_url}/api/v1/auth/me",
-                    headers={"Authorization": f"Bearer {token}"}
-                )
-
-                if response.status_code == 200:
-                    user_data = response.json()
-                    if user_data.get("is_superuser", False):
-                        return user_data
-
-                return None
-
-        except (httpx.RequestError, httpx.TimeoutException):
-            return None
 
 
 class AdminAuth(AuthenticationBackend):
@@ -123,38 +39,22 @@ class AdminAuth(AuthenticationBackend):
             return False
 
         # Сохраняем информацию о пользователе в сессии
-        request.session.update({
-            "user_id": str(user_data["id"]),
-            "username": user_data.get("username", ""),
-            "email": user_data.get("email", ""),
-            "first_name": user_data.get("first_name", ""),
-            "last_name": user_data.get("last_name", ""),
-            "is_superuser": user_data.get("is_superuser", False),
-            "access_token": user_data.get("access_token")  # Если auth-сервис возвращает токен
-        })
-
+        self._update_session(request, user_data)
         return True
 
     async def logout(self, request: Request) -> bool:
         """
         Очищает сессию пользователя
         """
-        # Можно добавить логику для инвалидации токена в auth-сервисе
         access_token = request.session.get("access_token")
         if access_token:
-            try:
-                async with httpx.AsyncClient(timeout=self.auth_client.timeout) as client:
-                    await client.post(
-                        f"{self.auth_client.auth_url}/api/v1/auth/logout",
-                        headers={"Authorization": f"Bearer {access_token}"}
-                    )
-            except:
-                pass  # Игнорируем ошибки при logout
+            # Пытаемся выйти из auth-сервиса
+            await self.auth_client.logout_user(access_token)
 
         request.session.clear()
         return True
 
-    async def authenticate(self, request: Request):
+    async def authenticate(self, request: Request) -> Optional[Dict]:
         """
         Проверяет аутентификацию для каждого запроса
         """
@@ -166,18 +66,51 @@ class AdminAuth(AuthenticationBackend):
 
         # Если есть токен, проверяем его валидность
         if access_token:
-            user_data = await self.auth_client.verify_token(access_token)
+            user_data = await self._verify_token_and_update_session(request, access_token)
             if user_data:
-                # Обновляем данные сессии
-                request.session.update({
-                    "username": user_data.get("username", ""),
-                    "email": user_data.get("email", ""),
-                    "first_name": user_data.get("first_name", ""),
-                    "last_name": user_data.get("last_name", ""),
-                })
                 return user_data
 
         # Если токена нет или он невалиден, проверяем по user_id
+        return await self._verify_user_by_id(request, user_id)
+
+    def _update_session(self, request: Request, user_data: Dict) -> None:
+        """
+        Обновляет данные сессии пользователя
+        """
+        request.session.update({
+            "user_id": str(user_data["id"]),
+            "username": user_data.get("username", ""),
+            "email": user_data.get("email", ""),
+            "first_name": user_data.get("first_name", ""),
+            "last_name": user_data.get("last_name", ""),
+            "is_superuser": user_data.get("is_superuser", False),
+            "access_token": user_data.get("access_token")
+        })
+
+    async def _verify_token_and_update_session(self, request: Request, access_token: str) -> Optional[Dict]:
+        """
+        Проверяет токен и обновляет данные сессии
+        """
+        try:
+            user_data = await self.auth_client.verify_token(access_token)
+            if user_data:
+                # Обновляем данные сессии без токена (он уже есть)
+                session_data = {k: v for k, v in user_data.items() if k != "access_token"}
+                request.session.update(session_data)
+                return user_data
+            else:
+                # Токен невалиден или пользователь не имеет прав
+                request.session.clear()
+                return None
+        except Exception as e:
+            logger.warning(f"Token verification failed: {e}")
+            request.session.clear()
+            return None
+
+    async def _verify_user_by_id(self, request: Request, user_id: str) -> Optional[Dict]:
+        """
+        Проверяет пользователя по ID
+        """
         try:
             user_data = await self.auth_client.get_user_info(user_id)
             if user_data:
@@ -186,6 +119,7 @@ class AdminAuth(AuthenticationBackend):
                 # Пользователь больше не существует или не имеет прав
                 request.session.clear()
                 return None
-
-        except Exception:
+        except Exception as e:
+            logger.warning(f"User verification failed: {e}")
+            request.session.clear()
             return None

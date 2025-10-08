@@ -3,8 +3,6 @@ x-app: &app
     - .env
   restart: unless-stopped
   platform: linux/amd64
-  networks:
-    - levelupper-network
 
 services:
   postgres:
@@ -42,6 +40,7 @@ services:
     <<: *app
     environment:
       - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
       - xpack.security.enabled=false
     volumes:
       - es_volume:/usr/share/elasticsearch/data
@@ -106,6 +105,8 @@ services:
         condition: service_healthy
       elasticsearch:
         condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   frontend:
     build:
@@ -132,7 +133,3 @@ volumes:
     driver: local
   es_volume:
     driver: local
-
-networks:
-  levelupper-network:
-    driver: bridge

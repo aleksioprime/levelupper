@@ -77,10 +77,9 @@ class AuthServiceSettings(BaseSettings):
     """
     Конфигурация для взаимодействия с auth-сервисом
     """
-    url: str = Field(alias='AUTH_SERVICE_URL', default='http://auth:8000')
+    url: str = Field(alias='AUTH_SERVICE_URL', default='http://levelupper-auth-app:8000')
     timeout: float = Field(alias='AUTH_SERVICE_TIMEOUT', default=30.0)
     max_batch_size: int = Field(alias='AUTH_SERVICE_MAX_BATCH_SIZE', default=100)
-    # Опциональные настройки для аутентификации между сервисами
     service_token: str = Field(alias='AUTH_SERVICE_TOKEN', default='')
 
 

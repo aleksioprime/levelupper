@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from src.core.config import settings
 from src.db.postgres import async_session_maker
 from .auth import AdminAuth
+from .client import AuthServiceClient
 from .models import setup_admin_views
 
 
@@ -38,4 +39,4 @@ def setup_admin(app: FastAPI) -> Admin:
     return admin
 
 
-__all__ = ["setup_admin"]
+__all__ = ["setup_admin", "AdminAuth", "AuthServiceClient"]

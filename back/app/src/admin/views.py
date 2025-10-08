@@ -40,10 +40,16 @@ class AuthServiceMixin:
 
         # Получаем информацию о пользователях батч-запросом
         try:
+            headers = {}
+            # Добавляем service token для межсервисной аутентификации, если он настроен
+            if settings.auth_service.service_token:
+                headers["Authorization"] = f"Bearer {settings.auth_service.service_token}"
+
             async with httpx.AsyncClient(timeout=30.0) as client:
                 response = await client.post(
                     f"{settings.auth_service.url}/api/v1/users/batch/",
-                    json={"user_ids": list(user_ids)}
+                    json={"user_ids": list(user_ids)},
+                    headers=headers
                 )
 
                 if response.status_code == 200:

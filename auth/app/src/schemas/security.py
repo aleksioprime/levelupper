@@ -10,3 +10,4 @@ class UserJWT(BaseModel):
     user_id: UUID = Field(..., description="Уникальный идентификатор пользователя")
     is_superuser: bool = False
     token: str
+    service_auth: bool = Field(default=False, description="Является ли это межсервисной аутентификацией")
