@@ -16,7 +16,7 @@ from .progress import Progress
 from .course import Course, CourseTopic, Lesson
 
 # Модели групп и записей
-from .groups import Group, Enrollment
+from .group import Group, Enrollment
 
 # Модели заданий и отправок
 from .assigment import Assignment, Submission, AnswerSubmission

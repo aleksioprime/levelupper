@@ -48,12 +48,7 @@ class Enrollment(UUIDMixin, Base):
     status: Mapped[EnrollmentStatus] = mapped_column(Enum(EnrollmentStatus), default=EnrollmentStatus.ACTIVE, nullable=False)
     date_start: Mapped[date | None] = mapped_column(Date)
 
-    # Ссылка на пользователя из auth-сервиса (только ID)
-    user_id: Mapped[uuid.UUID] = mapped_column(
-        Uuid(as_uuid=True),
-        nullable=False,
-        comment="ID пользователя из auth-сервиса"
-    )
+    user_id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), nullable=False)
 
     group_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("groups.id", ondelete="CASCADE"),

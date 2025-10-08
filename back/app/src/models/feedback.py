@@ -23,11 +23,7 @@ class Grade(UUIDMixin, TimestampMixin, Base):
         nullable=False,
     )
 
-    # ID преподавателя из auth-сервиса
-    teacher_id: Mapped[uuid.UUID | None] = mapped_column(
-        nullable=True,
-        comment="ID преподавателя из auth-сервиса"
-    )
+    teacher_id: Mapped[uuid.UUID | None] = mapped_column(nullable=True)
 
     submission: Mapped["Submission"] = relationship(back_populates="grade")
 
@@ -47,11 +43,7 @@ class Comment(UUIDMixin, TimestampMixin, Base):
 
     text: Mapped[str] = mapped_column(Text, nullable=False)
 
-    # ID преподавателя из auth-сервиса
-    teacher_id: Mapped[uuid.UUID | None] = mapped_column(
-        nullable=True,
-        comment="ID преподавателя из auth-сервиса"
-    )
+    teacher_id: Mapped[uuid.UUID | None] = mapped_column(nullable=True)
 
     submission_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("submissions.id", ondelete="CASCADE"),

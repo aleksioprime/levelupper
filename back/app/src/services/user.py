@@ -3,20 +3,9 @@
 from typing import Dict, List, Optional
 import uuid
 import httpx
-from pydantic import BaseModel
 
 from src.core.config import settings
-
-
-class UserInfo(BaseModel):
-    """Модель информации о пользователе из auth-сервиса"""
-    id: uuid.UUID
-    username: str
-    email: str
-    first_name: str
-    last_name: str
-    is_superuser: bool
-    is_active: bool = True
+from src.schemas.user import UserInfo
 
 
 class AuthService:
