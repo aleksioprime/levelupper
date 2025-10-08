@@ -98,7 +98,7 @@ services:
       - ./back/app:/usr/src/app
     ports:
       - "8302:8000"
-    command: python src/main.py
+    command: python -m src.main
     depends_on:
       postgres:
         condition: service_healthy
