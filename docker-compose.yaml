@@ -57,7 +57,9 @@ services:
       - ./back/airflow/dags:/opt/airflow/dags
       - ./back/airflow/logs:/opt/airflow/logs
       - ./back/airflow/plugins:/opt/airflow/plugins
+      - ./back/airflow/requirements.txt:/requirements.txt
       - ./back/airflow/init.sh:/opt/airflow/init.sh
+      - ./back:/usr/src/app
     ports:
       - "8304:8080"
     entrypoint: /opt/airflow/init.sh
@@ -78,7 +80,9 @@ services:
       - ./back/airflow/dags:/opt/airflow/dags
       - ./back/airflow/logs:/opt/airflow/logs
       - ./back/airflow/plugins:/opt/airflow/plugins
+      - ./back/airflow/requirements.txt:/requirements.txt
       - ./back/airflow/init.sh:/opt/airflow/init.sh
+      - ./back:/usr/src/app
     entrypoint: /opt/airflow/init.sh
     command: scheduler
     depends_on:

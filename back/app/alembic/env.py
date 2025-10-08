@@ -7,8 +7,10 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
 
-from src.common.core.config import settings
-from src.common.db.postgres import Base
+from src.core.config import settings
+from src.db.postgres import Base
+
+from src.models import *  # noqa: F403,F401
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

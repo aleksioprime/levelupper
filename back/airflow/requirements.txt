@@ -1,0 +1,14 @@
+# Зависимости для Airflow DAG'ов
+# Эти пакеты должны быть доступны в контейнере Airflow
+
+# Elasticsearch
+elasticsearch>=8.0.0,<9.0.0
+
+# Redis для кэширования времени синхронизации
+redis>=4.0.0
+
+# SQLAlchemy для работы с БД
+sqlalchemy>=1.4.0
+
+# Psycopg2 для PostgreSQL
+psycopg2-binary>=2.8.0

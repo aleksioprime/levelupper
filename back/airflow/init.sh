@@ -1,6 +1,12 @@
 #!/bin/bash
 set -e
 
+# Установка дополнительных пакетов
+if [ -f /requirements.txt ]; then
+  echo "Установка дополнительных зависимостей..."
+  pip install -r /requirements.txt
+fi
+
 # Инициализация БД (создаёт таблицы, если их нет)
 airflow db migrate
 
