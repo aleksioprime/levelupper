@@ -2,14 +2,12 @@
 Клиент для взаимодействия с auth-сервисом
 """
 import logging
-import uuid
 from typing import Dict, Optional
 
 import httpx
 
 from src.core.config import settings
 from src.utils.token import JWTHelper
-from src.services.user import auth_service
 
 logger = logging.getLogger(__name__)
 
@@ -95,11 +93,11 @@ class AuthServiceClient:
             logger.warning(f"Failed to verify token: {e}")
             return None
 
-    async def get_user_info(self, user_id: str) -> Optional[Dict]:
+    async def get_user_info(self, user_id: str, access_token: str) -> Optional[Dict]:
         """
-        Получает информацию о пользователе по ID через локальный сервис
+        Получает информацию о пользователе по ID через auth-сервис
         """
-        return await self._get_user_info_from_service(user_id)
+        return await self._get_user_info_from_auth_service(user_id, access_token)
 
     async def logout_user(self, access_token: str) -> bool:
         """
@@ -134,35 +132,6 @@ class AuthServiceClient:
 
         except Exception as e:
             logger.warning(f"Failed to get user from token: {e}")
-            return None
-
-    async def _get_user_info_from_service(self, user_id: str) -> Optional[Dict]:
-        """
-        Получает информацию о пользователе через локальный auth_service
-        """
-        try:
-            user_info = await auth_service.get_user_info(uuid.UUID(user_id))
-            if not user_info:
-                logger.warning(f"User {user_id} not found in auth service")
-                return None
-
-            # Проверяем права суперпользователя и активность
-            if not (user_info.is_superuser and user_info.is_active):
-                logger.info(f"User {user_id} is not an active superuser")
-                return None
-
-            return {
-                "id": str(user_info.id),
-                "username": user_info.username,
-                "email": user_info.email,
-                "first_name": user_info.first_name,
-                "last_name": user_info.last_name,
-                "is_superuser": user_info.is_superuser,
-                "is_active": user_info.is_active
-            }
-
-        except Exception as e:
-            logger.warning(f"Failed to get user info for {user_id}: {e}")
             return None
 
     async def _get_user_info_from_auth_service(self, user_id: str, access_token: str) -> Optional[Dict]:
