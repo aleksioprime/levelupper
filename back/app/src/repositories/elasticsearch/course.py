@@ -90,7 +90,7 @@ class CourseElasticSearchRepository:
                     "path": "groups",
                     "query": {
                         "terms": {
-                            "groups.id": [str(gid) for gid in request.group_ids]
+                            "groups.id": [str(gid) for gid in params.group_ids]
                         }
                     }
                 }

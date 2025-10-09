@@ -35,4 +35,4 @@ async def get_course_service(
         es_repo: CourseElasticSearchRepository = Depends(get_elasticsearch_course_repository),
 ) -> CourseService:
     """ Dependency для получения сервиса управления курсами """
-    return CourseService(uow=uow, elasticsearch_repo=es_repo)
+    return CourseService(uow=uow, elasticsearch=es_repo)

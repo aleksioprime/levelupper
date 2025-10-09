@@ -19,6 +19,24 @@ from src.services.course import CourseService
 
 router = APIRouter()
 
+
+@router.get(
+    path='/search/',
+    summary='Поиск курсов',
+    response_model=PaginatedResponse[CourseSchema],
+    status_code=status.HTTP_200_OK,
+)
+async def search_courses(
+        params: Annotated[CourseQueryParams, Depends(get_course_params)],
+        service: Annotated[CourseService, Depends(get_course_service)] = None,
+        user: Annotated[UserJWT, Depends(permission_required())] = None,
+) -> PaginatedResponse[CourseSchema]:
+    """
+    Поиск курсов с использованием Elasticsearch
+    """
+    return await service.search_courses(params)
+
+
 @router.get(
     path='/',
     summary='Получить все курсы',
@@ -158,22 +176,3 @@ async def remove_course_moderator(
     Удаляет модератора курса
     """
     await service.remove_moderator(course_id, user_id)
-
-
-# Поисковые эндпоинты для Elasticsearch
-
-@router.get(
-    path='/search/',
-    summary='Поиск курсов',
-    response_model=PaginatedResponse[CourseSchema],
-    status_code=status.HTTP_200_OK,
-)
-async def search_courses(
-        params: Annotated[CourseQueryParams, Depends(get_course_params)],
-        service: Annotated[CourseService, Depends(get_course_service)] = None,
-        user: Annotated[UserJWT, Depends(permission_required())] = None,
-) -> PaginatedResponse[CourseSchema]:
-    """
-    Поиск курсов с использованием Elasticsearch
-    """
-    return await service.search_courses(params)
