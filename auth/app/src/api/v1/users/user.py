@@ -163,7 +163,7 @@ async def delete_user_avatar(
 async def get_users_batch(
     body: BatchUserRequestSchema,
     service: Annotated[UserService, Depends(get_user_service)],
-    user: Annotated[UserJWT, Depends(permission_required())],
+    user: Annotated[UserJWT, Depends(permission_required(allow_service_auth=True))],
 ) -> BatchUserResponseSchema:
     """
     Получает информацию о нескольких пользователях одним запросом.
@@ -194,7 +194,7 @@ async def get_users_batch(
 async def check_users_exist(
     body: UserExistsRequestSchema,
     service: Annotated[UserService, Depends(get_user_service)],
-    user: Annotated[UserJWT, Depends(permission_required())],
+    user: Annotated[UserJWT, Depends(permission_required(allow_service_auth=True))],
 ) -> UserExistsResponseSchema:
     """
     Проверяет существование пользователей по их ID.
@@ -217,7 +217,7 @@ async def check_users_exist(
 async def get_user_by_id(
     user_id: UUID,
     service: Annotated[UserService, Depends(get_user_service)],
-    user: Annotated[UserJWT, Depends(permission_required())],
+    user: Annotated[UserJWT, Depends(permission_required(allow_service_auth=True))],
 ) -> UserSchema:
     """
     Получает информацию о пользователе по его ID.

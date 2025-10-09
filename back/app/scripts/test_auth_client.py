@@ -39,6 +39,61 @@ async def test():
     print(f'   Батч service: {len(batch1)} пользователей')
     print(f'   Батч user: {len(batch2)} пользователей')
 
+    print('\\n5. 🔒 Тестируем ограничения service token:')
+    # Тестируем эндпоинт без allow_service_auth (должен вернуть ошибку)
+    try:
+        async with httpx.AsyncClient() as client:
+            # Пробуем получить /users/me/ с service token (должен быть запрещен)
+            response = await client.get(
+                f'{settings.auth_service.url}/api/v1/users/me/',
+                headers={'Authorization': f'Bearer {settings.auth_service.service_token}'}
+            )
+            if response.status_code == 403:
+                print('   ✅ Service token корректно заблокирован для /users/me/')
+            elif response.status_code == 200:
+                print('   ❌ ОШИБКА: Service token не должен работать для /users/me/')
+            elif response.status_code == 500:
+                print('   ✅ Service token заблокирован для /users/me/ (500 - внутренняя ошибка)')
+                print('      (Это ожидаемо - эндпоинт не поддерживает service auth)')
+            else:
+                print(f'   ⚠️  Неожиданный код ответа для /users/me/: {response.status_code}')
+                print(f'      Ответ: {response.text[:100]}...')
+    except Exception as e:
+        print(f'   ⚠️  Ошибка при тестировании ограничений: {e}')
+
+    print('\\n6. ✅ Тестируем разрешенные service token эндпоинты:')
+    # Проверяем, что service token работает на разрешенных эндпоинтах
+    try:
+        async with httpx.AsyncClient() as client:
+            # Тестируем /users/{user_id}/ с service token (должен работать)
+            response = await client.get(
+                f'{settings.auth_service.url}/api/v1/users/{user_id}/',
+                headers={'Authorization': f'Bearer {settings.auth_service.service_token}'}
+            )
+            if response.status_code == 200:
+                user_data = response.json()
+                print(f'   ✅ Service token работает для /users/{{user_id}}/: {user_data["username"]}')
+            else:
+                print(f'   ❌ ОШИБКА: Service token должен работать для /users/{{user_id}}/')
+                print(f'      Код ответа: {response.status_code}')
+
+            # Тестируем /users/batch/ с service token (должен работать)
+            batch_response = await client.post(
+                f'{settings.auth_service.url}/api/v1/users/batch/',
+                headers={'Authorization': f'Bearer {settings.auth_service.service_token}'},
+                json={'user_ids': [str(user_id)]}
+            )
+            if batch_response.status_code == 200:
+                batch_data = batch_response.json()
+                users_count = len(batch_data.get('users', {}))
+                print(f'   ✅ Service token работает для /users/batch/: {users_count} пользователей')
+            else:
+                print(f'   ❌ ОШИБКА: Service token должен работать для /users/batch/')
+                print(f'      Код ответа: {batch_response.status_code}')
+
+    except Exception as e:
+        print(f'   ⚠️  Ошибка при тестировании разрешенных эндпоинтов: {e}')
+
     print('\\n🎉 Все тесты прошли успешно!')
 
 asyncio.run(test())

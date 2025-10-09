@@ -9,11 +9,15 @@ def permission_required(
     roles: Optional[List[str]] = None,
     allow_self: bool = False,
     user_id_param: str = "user_id",
+    allow_service_auth: bool = False,
 ):
     def checker(
         user: UserJWT = Depends(JWTBearer()),
         request: Request = None,
     ):
+        # Проверяем service аутентификацию
+        if getattr(user, "service_auth", False) and allow_service_auth:
+            return user
 
         if getattr(user, "is_superuser", False):
             return user

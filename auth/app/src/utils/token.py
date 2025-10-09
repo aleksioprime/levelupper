@@ -106,6 +106,7 @@ class JWTHelper:
                 "user_id": decoded_token.get("sub"),
                 "is_superuser": decoded_token.get("is_superuser", False),
                 "token": token,
+                "service_auth": decoded_token.get("service_auth", False),
             }
 
             return UserJWT(**user_data)

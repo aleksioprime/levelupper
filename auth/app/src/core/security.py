@@ -46,7 +46,7 @@ class JWTBearer(HTTPBearer):
             # Возвращаем объект как от JWT для service аутентификации
             return {
                 "sub": "00000000-0000-0000-0000-000000000000",
-                "is_superuser": False,
+                "is_superuser": True,  # Service token имеет максимальные права
                 "service_auth": True
             }
         return None
