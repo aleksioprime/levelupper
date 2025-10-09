@@ -51,7 +51,7 @@ def sync_courses_to_elastic():
     from elasticsearch import AsyncElasticsearch
     import redis.asyncio as redis
 
-    from src.db.postgres import async_session_maker
+    from config.postgres import async_session_maker
     from src.elasticsearch.models import CourseDocument, create_indices
 
     async def run_sync():

@@ -29,7 +29,7 @@ class CourseAdminView(BaseAdminView, model=Course):
 class CourseModeratorAdminView(BaseAdminView, model=CourseModerator):
     """Админка для модераторов курсов"""
 
-    column_list = [CourseModerator.id, "user_info", CourseModerator.course_id, CourseModerator.created_at]
+    column_list = [CourseModerator.id, CourseModerator.course_id, CourseModerator.created_at]
     column_searchable_list = [CourseModerator.user_id]
     column_sortable_list = [CourseModerator.created_at]
 
@@ -87,7 +87,7 @@ class GroupAdminView(BaseAdminView, model=Group):
 class EnrollmentAdminView(BaseAdminView, model=Enrollment):
     """Админка для записей в группы"""
 
-    column_list = [Enrollment.id, "user_info", Enrollment.group_id, Enrollment.role, Enrollment.status, Enrollment.date_start]
+    column_list = [Enrollment.id, Enrollment.group_id, Enrollment.role, Enrollment.status, Enrollment.date_start]
     column_searchable_list = [Enrollment.user_id]
     column_sortable_list = [Enrollment.role, Enrollment.status, Enrollment.date_start]
     column_details_exclude_list = ["progress"]

@@ -12,3 +12,6 @@ sqlalchemy>=1.4.0
 
 # Psycopg2 для PostgreSQL
 psycopg2-binary>=2.8.0
+
+# AsyncPG для асинхронного подключения к PostgreSQL
+asyncpg>=0.27.0
