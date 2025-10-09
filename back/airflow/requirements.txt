@@ -15,3 +15,10 @@ psycopg2-binary>=2.8.0
 
 # AsyncPG для асинхронного подключения к PostgreSQL
 asyncpg>=0.27.0
+
+# Pydantic для настроек
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+
+# Зависимости для работы с UUID и типами
+uuid>=1.30

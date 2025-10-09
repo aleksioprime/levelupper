@@ -6,7 +6,7 @@ import sys
 import logging
 
 # Добавляем корневую папку проекта в Python path
-sys.path.insert(0, '/usr/src/app')
+sys.path.insert(0, '/opt/airflow/app')
 
 from airflow import DAG
 from airflow.operators.python import PythonOperator
@@ -38,7 +38,7 @@ def test_database_connection():
     import asyncio
     from sqlalchemy import text
 
-    from config.postgres import async_session_maker
+    from src.db.postgres import async_session_maker
 
     async def test_db():
         logger.info("Тестирование подключения к PostgreSQL...")
