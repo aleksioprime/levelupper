@@ -38,7 +38,7 @@ def test_database_connection():
     import asyncio
     from sqlalchemy import text
 
-    from src.db.postgres import async_session_maker
+    from db_adapter import async_session_maker
 
     async def test_db():
         logger.info("Тестирование подключения к PostgreSQL...")

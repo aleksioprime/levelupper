@@ -54,6 +54,8 @@ services:
     image: apache/airflow:2.9.1-python3.11
     container_name: levelupper-airflow-webserver
     <<: *app
+    environment:
+      - PYTHONPATH=/opt/airflow/app:/opt/airflow
     volumes:
       - ./back/airflow/dags:/opt/airflow/dags
       - ./back/airflow/logs:/opt/airflow/logs
@@ -77,6 +79,8 @@ services:
     image: apache/airflow:2.9.1-python3.11
     container_name: levelupper-airflow-scheduler
     <<: *app
+    environment:
+      - PYTHONPATH=/opt/airflow/app:/opt/airflow
     volumes:
       - ./back/airflow/dags:/opt/airflow/dags
       - ./back/airflow/logs:/opt/airflow/logs

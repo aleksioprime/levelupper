@@ -91,12 +91,11 @@ def setup_elasticsearch_indices():
 def sync_courses_to_elasticsearch():
     """Синхронизирует курсы из БД в Elasticsearch"""
     import asyncio
-    from sqlalchemy import select
-    from sqlalchemy.orm import selectinload
+    from sqlalchemy import select, func
 
-    from src.db.postgres import async_session_maker
+    from db_adapter import async_session_maker
     from src.elasticsearch.client import elasticsearch_client
-    from src.models.course import Course
+    from course_models import Course, CourseTopic, CourseModerator
 
     async def sync_courses():
         logger.info("Синхронизация курсов с Elasticsearch...")
@@ -108,10 +107,7 @@ def sync_courses_to_elasticsearch():
 
             async with async_session_maker() as session:
                 # Получаем все курсы из БД
-                stmt = select(Course).options(
-                    selectinload(Course.topics),
-                    selectinload(Course.moderators)
-                )
+                stmt = select(Course)
                 result = await session.execute(stmt)
                 courses = result.scalars().all()
 
@@ -120,16 +116,24 @@ def sync_courses_to_elasticsearch():
                 # Подготавливаем документы для индексации
                 documents = []
                 for course in courses:
+                    # Получаем количество тем курса
+                    topics_count_stmt = select(func.count(CourseTopic.id)).where(CourseTopic.course_id == course.id)
+                    topics_count_result = await session.execute(topics_count_stmt)
+                    topics_count = topics_count_result.scalar() or 0
+
+                    # Получаем количество модераторов курса
+                    moderators_count_stmt = select(func.count(CourseModerator.id)).where(CourseModerator.course_id == course.id)
+                    moderators_count_result = await session.execute(moderators_count_stmt)
+                    moderators_count = moderators_count_result.scalar() or 0
+
                     doc = {
                         'id': str(course.id),
                         'title': course.title,
                         'description': course.description,
                         'created_at': course.created_at.isoformat() if course.created_at else None,
                         'updated_at': course.updated_at.isoformat() if course.updated_at else None,
-                        'topics_count': len(course.topics),
-                        'moderators_count': len(course.moderators),
-                        'topic_ids': [str(topic.id) for topic in course.topics],
-                        'moderator_ids': [str(mod.user_id) for mod in course.moderators]
+                        'topics_count': topics_count,
+                        'moderators_count': moderators_count,
                     }
                     documents.append(doc)
 
@@ -164,12 +168,11 @@ def sync_courses_to_elasticsearch():
 def sync_course_topics_to_elasticsearch():
     """Синхронизирует темы курсов из БД в Elasticsearch"""
     import asyncio
-    from sqlalchemy import select
-    from sqlalchemy.orm import selectinload
+    from sqlalchemy import select, func
 
-    from src.db.postgres import async_session_maker
+    from db_adapter import async_session_maker
     from src.elasticsearch.client import elasticsearch_client
-    from src.models.course import CourseTopic
+    from course_models import CourseTopic, Course
 
     async def sync_topics():
         logger.info("Синхронизация тем курсов с Elasticsearch...")
@@ -180,12 +183,7 @@ def sync_course_topics_to_elasticsearch():
 
             async with async_session_maker() as session:
                 # Получаем все темы курсов из БД
-                stmt = select(CourseTopic).options(
-                    selectinload(CourseTopic.course),
-                    selectinload(CourseTopic.parent),
-                    selectinload(CourseTopic.subtopics),
-                    selectinload(CourseTopic.lessons)
-                )
+                stmt = select(CourseTopic)
                 result = await session.execute(stmt)
                 topics = result.scalars().all()
 
@@ -194,21 +192,42 @@ def sync_course_topics_to_elasticsearch():
                 # Подготавливаем документы для индексации
                 documents = []
                 for topic in topics:
+                    # Получаем название курса
+                    course_stmt = select(Course.title).where(Course.id == topic.course_id)
+                    course_result = await session.execute(course_stmt)
+                    course_title = course_result.scalar()
+
+                    # Получаем название родительской темы, если есть
+                    parent_title = None
+                    if topic.parent_id:
+                        parent_stmt = select(CourseTopic.title).where(CourseTopic.id == topic.parent_id)
+                        parent_result = await session.execute(parent_stmt)
+                        parent_title = parent_result.scalar()
+
+                    # Подсчитываем подтемы
+                    subtopics_count_stmt = select(func.count(CourseTopic.id)).where(CourseTopic.parent_id == topic.id)
+                    subtopics_count_result = await session.execute(subtopics_count_stmt)
+                    subtopics_count = subtopics_count_result.scalar() or 0
+
+                    # Подсчитываем уроки
+                    from course_models import Lesson
+                    lessons_count_stmt = select(func.count(Lesson.id)).where(Lesson.topic_id == topic.id)
+                    lessons_count_result = await session.execute(lessons_count_stmt)
+                    lessons_count = lessons_count_result.scalar() or 0
+
                     doc = {
                         'id': str(topic.id),
                         'title': topic.title,
                         'description': topic.description,
                         'order': topic.order,
                         'course_id': str(topic.course_id),
-                        'course_title': topic.course.title if topic.course else None,
+                        'course_title': course_title,
                         'parent_id': str(topic.parent_id) if topic.parent_id else None,
-                        'parent_title': topic.parent.title if topic.parent else None,
+                        'parent_title': parent_title,
                         'created_at': topic.created_at.isoformat() if topic.created_at else None,
                         'updated_at': topic.updated_at.isoformat() if topic.updated_at else None,
-                        'subtopics_count': len(topic.subtopics),
-                        'lessons_count': len(topic.lessons),
-                        'subtopic_ids': [str(subtopic.id) for subtopic in topic.subtopics],
-                        'lesson_ids': [str(lesson.id) for lesson in topic.lessons]
+                        'subtopics_count': subtopics_count,
+                        'lessons_count': lessons_count,
                     }
                     documents.append(doc)
 
@@ -242,11 +261,10 @@ def sync_lessons_to_elasticsearch():
     """Синхронизирует уроки из БД в Elasticsearch"""
     import asyncio
     from sqlalchemy import select
-    from sqlalchemy.orm import selectinload
 
-    from src.db.postgres import async_session_maker
+    from db_adapter import async_session_maker
     from src.elasticsearch.client import elasticsearch_client
-    from src.models.course import Lesson
+    from course_models import Lesson, CourseTopic, Course
 
     async def sync_lessons():
         logger.info("Синхронизация уроков с Elasticsearch...")
@@ -257,10 +275,7 @@ def sync_lessons_to_elasticsearch():
 
             async with async_session_maker() as session:
                 # Получаем все уроки из БД
-                stmt = select(Lesson).options(
-                    selectinload(Lesson.topic).selectinload("course"),
-                    selectinload(Lesson.assignments)
-                )
+                stmt = select(Lesson)
                 result = await session.execute(stmt)
                 lessons = result.scalars().all()
 
@@ -269,6 +284,18 @@ def sync_lessons_to_elasticsearch():
                 # Подготавливаем документы для индексации
                 documents = []
                 for lesson in lessons:
+                    # Получаем информацию о теме
+                    topic_stmt = select(CourseTopic).where(CourseTopic.id == lesson.topic_id)
+                    topic_result = await session.execute(topic_stmt)
+                    topic = topic_result.scalar_one_or_none()
+
+                    # Получаем информацию о курсе
+                    course_title = None
+                    if topic:
+                        course_stmt = select(Course.title).where(Course.id == topic.course_id)
+                        course_result = await session.execute(course_stmt)
+                        course_title = course_result.scalar()
+
                     doc = {
                         'id': str(lesson.id),
                         'title': lesson.title,
@@ -276,13 +303,12 @@ def sync_lessons_to_elasticsearch():
                         'order': lesson.order,
                         'date': lesson.date.isoformat() if lesson.date else None,
                         'topic_id': str(lesson.topic_id),
-                        'topic_title': lesson.topic.title if lesson.topic else None,
-                        'course_id': str(lesson.topic.course_id) if lesson.topic else None,
-                        'course_title': lesson.topic.course.title if lesson.topic and lesson.topic.course else None,
+                        'topic_title': topic.title if topic else None,
+                        'course_id': str(topic.course_id) if topic else None,
+                        'course_title': course_title,
                         'created_at': lesson.created_at.isoformat() if lesson.created_at else None,
                         'updated_at': lesson.updated_at.isoformat() if lesson.updated_at else None,
-                        'assignments_count': len(lesson.assignments),
-                        'assignment_ids': [str(assignment.id) for assignment in lesson.assignments]
+                        'assignments_count': 0,  # Упрощено, так как нет модели Assignment в нашем адаптере
                     }
                     documents.append(doc)
 
@@ -317,9 +343,9 @@ def cleanup_orphaned_documents():
     import asyncio
     from sqlalchemy import select
 
-    from src.db.postgres import async_session_maker
+    from db_adapter import async_session_maker
     from src.elasticsearch.client import elasticsearch_client
-    from src.models.course import Course, CourseTopic, Lesson
+    from course_models import Course, CourseTopic, Lesson
 
     async def cleanup_documents():
         logger.info("Очистка устаревших документов в Elasticsearch...")
@@ -398,9 +424,9 @@ def validate_sync_completeness():
     import asyncio
     from sqlalchemy import select, func
 
-    from src.db.postgres import async_session_maker
+    from db_adapter import async_session_maker
     from src.elasticsearch.client import elasticsearch_client
-    from src.models.course import Course, CourseTopic, Lesson
+    from course_models import Course, CourseTopic, Lesson
 
     async def validate_sync():
         logger.info("Проверка полноты синхронизации...")
