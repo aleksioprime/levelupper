@@ -40,14 +40,14 @@ class CourseService:
                 raise BaseException(f"Курс с ID {course_id} не найден")
         return course
 
-    async def search_courses(self, params: CourseQueryParams) -> PaginatedResponse[CourseSchema]:
+    async def search_courses(self, params: CourseQueryParams) -> PaginatedResponse[CourseDetailSchema]:
         """Поиск курсов"""
         try:
             courses, total = await self.elasticsearch.search_courses(params)
 
-            items = [CourseSchema.model_validate(course) for course in courses]
+            items = [CourseDetailSchema.model_validate(course) for course in courses]
 
-            return PaginatedResponse[CourseSchema](
+            return PaginatedResponse[CourseDetailSchema](
                 items=items,
                 total=total,
                 limit=params.limit,

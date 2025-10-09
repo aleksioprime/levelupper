@@ -27,11 +27,7 @@ class CourseUpdateSchema(BaseModel):
     description: str | None = Field(None, description="Новое описание курса")
 
 
-class CourseDetailSchema(CourseSchema):
-    moderators: list[ModeratorSchema] = Field(default_factory=list, description="Модераторы курса")
-
-
-# Схемы для Elasticsearch
+# Схемы для Elasticsearch и детального отображения
 class GroupNestedSchema(BaseModel):
     """Схема для вложенной группы"""
     model_config = ConfigDict(from_attributes=True)
@@ -47,6 +43,16 @@ class ModeratorNestedSchema(BaseModel):
     user_id: UUID
 
 
+class LessonNestedSchema(BaseModel):
+    """Схема для вложенного урока"""
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    title: str
+    order: int
+    date: Optional[date] = None
+
+
 class TopicNestedSchema(BaseModel):
     """Схема для вложенной темы"""
     model_config = ConfigDict(from_attributes=True)
@@ -54,6 +60,12 @@ class TopicNestedSchema(BaseModel):
     id: UUID
     title: str
     order: int
+    lessons: List[LessonNestedSchema] = Field(default_factory=list)
+
+
+class CourseDetailSchema(CourseSchema):
+    moderators: list[ModeratorSchema] = Field(default_factory=list, description="Модераторы курса")
+    topics: List[TopicNestedSchema] = Field(default_factory=list, description="Темы курса с уроками")
 
 
 class CourseElasticsearchSchema(BaseModel):
@@ -71,7 +83,20 @@ class CourseElasticsearchSchema(BaseModel):
 
 
 class CourseQueryParams(BasePaginationParams):
-    ...
+    """Параметры поиска курсов"""
+    query: Optional[str] = Field(None, description="Поисковый запрос по названию и описанию")
+    group_ids: Optional[List[UUID]] = Field(None, description="Список ID групп для фильтрации")
+    moderator_ids: Optional[List[UUID]] = Field(None, description="Список ID модераторов для фильтрации")
+
+    @property
+    def page(self) -> int:
+        """Номер страницы (начиная с 1)"""
+        return (self.offset // self.limit) + 1
+
+    @property
+    def size(self) -> int:
+        """Размер страницы"""
+        return self.limit
 
     class Config:
         arbitrary_types_allowed = True

@@ -23,14 +23,14 @@ router = APIRouter()
 @router.get(
     path='/search/',
     summary='Поиск курсов',
-    response_model=PaginatedResponse[CourseSchema],
+    response_model=PaginatedResponse[CourseDetailSchema],
     status_code=status.HTTP_200_OK,
 )
 async def search_courses(
         params: Annotated[CourseQueryParams, Depends(get_course_params)],
         service: Annotated[CourseService, Depends(get_course_service)] = None,
         user: Annotated[UserJWT, Depends(permission_required())] = None,
-) -> PaginatedResponse[CourseSchema]:
+) -> PaginatedResponse[CourseDetailSchema]:
     """
     Поиск курсов с использованием Elasticsearch
     """

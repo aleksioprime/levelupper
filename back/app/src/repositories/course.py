@@ -22,6 +22,20 @@ class CourseRepository:
         result = await self.session.execute(query)
         return result.scalars().all()
 
+    async def get_all_with_relations(self) -> list[Course]:
+        """ Получает все курсы с связанными данными """
+        query = (
+            select(Course)
+            .options(
+                joinedload(Course.topics).joinedload(CourseTopic.lessons),
+                joinedload(Course.groups),
+                joinedload(Course.moderators)
+            )
+            .order_by(Course.title.asc())
+        )
+        result = await self.session.execute(query)
+        return result.unique().scalars().all()
+
     async def get_by_id(self, course_id: UUID) -> Course:
         """ Получает курс по его ID """
         query = select(Course).where(Course.id == course_id)
@@ -34,6 +48,7 @@ class CourseRepository:
             select(Course)
             .options(
                 joinedload(Course.topics).joinedload(CourseTopic.subtopics),
+                joinedload(Course.topics).joinedload(CourseTopic.lessons),
                 joinedload(Course.moderators)
             )
             .where(Course.id == course_id)

@@ -26,7 +26,16 @@
         "properties": {
           "id": { "type": "keyword" },
           "title": { "type": "text", "analyzer": "russian" },
-          "order": { "type": "integer" }
+          "order": { "type": "integer" },
+          "lessons": {
+            "type": "nested",
+            "properties": {
+              "id": { "type": "keyword" },
+              "title": { "type": "text", "analyzer": "russian" },
+              "order": { "type": "integer" },
+              "date": { "type": "date" }
+            }
+          }
         }
       },
       "created_at": { "type": "date" },

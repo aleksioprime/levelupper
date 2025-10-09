@@ -132,14 +132,15 @@ docker-compose -p levelupper exec backend alembic revision --autogenerate -m "in
 docker-compose -p levelupper exec backend alembic upgrade head
 ```
 
+```bash
+# Тестирование запросов
+docker-compose -p levelupper exec backend python scripts/test_auth_client.py
+```
+
 ### 5. Инициализация Elasticsearch
 ```bash
-# Создайте индексы Elasticsearch
-docker-compose -p levelupper exec backend python -c "
-import asyncio
-from src.elasticsearch.models import create_indices
-asyncio.run(create_indices())
-"
+# Тестирование запросов
+docker-compose -p levelupper exec backend python scripts/test_elasticsearch.py
 ```
 
 ### 6. Настройка Airflow
