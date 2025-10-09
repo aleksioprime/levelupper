@@ -95,35 +95,6 @@ def test_elasticsearch_connection():
     asyncio.run(test_es())
 
 
-def test_redis_connection():
-    """Тестирование подключения к Redis"""
-    import asyncio
-    import redis.asyncio as redis
-
-    async def test_redis():
-        logger.info("Тестирование подключения к Redis...")
-        redis_client = redis.Redis(host="redis", port=6379, decode_responses=True)
-
-        try:
-            # Простая проверка подключения
-            pong = await redis_client.ping()
-            logger.info(f"Redis ping: {pong}")
-
-            # Проверка записи/чтения
-            test_key = "airflow:test:connection"
-            await redis_client.set(test_key, "test_value", ex=60)
-            test_value = await redis_client.get(test_key)
-            logger.info(f"Redis test value: {test_value}")
-
-        except Exception as e:
-            logger.error(f"Ошибка подключения к Redis: {e}")
-            raise
-        finally:
-            await redis_client.close()
-
-    asyncio.run(test_redis())
-
-
 # Определение задач
 test_db_task = PythonOperator(
     task_id='test_database_connection',
@@ -137,11 +108,5 @@ test_es_task = PythonOperator(
     dag=dag
 )
 
-test_redis_task = PythonOperator(
-    task_id='test_redis_connection',
-    python_callable=test_redis_connection,
-    dag=dag
-)
-
 # Параллельное выполнение всех тестов
-[test_db_task, test_es_task, test_redis_task]
+[test_db_task, test_es_task]

@@ -1,15 +1,12 @@
 """
 Модели курсов для Airflow DAG'ов
-Совместимость с SQLAlchemy 1.4.x
 """
-import uuid
-from datetime import date
 
 from sqlalchemy import Column, Text, String, ForeignKey, Integer, Date, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import relationship
 
-from models_base import Base, UUIDMixin, TimestampMixin
+
+from .base import Base, UUIDMixin, TimestampMixin
 
 
 class Course(UUIDMixin, TimestampMixin, Base):
