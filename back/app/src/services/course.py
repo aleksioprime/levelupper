@@ -1,20 +1,25 @@
 from uuid import UUID
 from typing import List
+import math
 
 from sqlalchemy.exc import IntegrityError, NoResultFound
 
 from src.exceptions.base import BaseException
 from src.repositories.uow import UnitOfWork
-from src.schemas.course import CourseSchema, CourseUpdateSchema, CourseDetailSchema, CourseCreateSchema
+from src.repositories.elasticsearch.course import CourseElasticSearchRepository
+from src.schemas.course import CourseSchema, CourseUpdateSchema, CourseDetailSchema, CourseCreateSchema, CourseQueryParams
 from src.schemas.moderator import ModeratorSchema, ModeratorListSchema
+from src.schemas.pagination import PaginatedResponse
+
 
 
 class CourseService:
     """
     Сервис для управления курсами
     """
-    def __init__(self, uow: UnitOfWork):
+    def __init__(self, uow: UnitOfWork, elasticsearch: CourseElasticSearchRepository):
         self.uow = uow
+        self.elasticsearch = elasticsearch
 
     async def get_all(self) -> List[CourseSchema]:
         """
@@ -34,6 +39,25 @@ class CourseService:
             if not course:
                 raise BaseException(f"Курс с ID {course_id} не найден")
         return course
+
+    async def search_courses(self, params: CourseQueryParams) -> PaginatedResponse[CourseSchema]:
+        """Поиск курсов"""
+        try:
+            courses, total = await self.elasticsearch.search_courses(params)
+
+            items = [CourseSchema.model_validate(course) for course in courses]
+
+            return PaginatedResponse[CourseSchema](
+                items=items,
+                total=total,
+                limit=params.limit,
+                offset=params.offset,
+                has_next=(params.offset + 1) * params.limit < total,
+                has_previous=params.offset > 0
+            )
+
+        except Exception as e:
+            raise BaseException(f"Ошибка поиска курсов") from e
 
     async def create(self, body: CourseCreateSchema) -> CourseSchema:
         """

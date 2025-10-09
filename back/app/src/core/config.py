@@ -83,6 +83,33 @@ class AuthServiceSettings(BaseSettings):
     service_token: str = Field(alias='AUTH_SERVICE_TOKEN', default='')
 
 
+class ElasticsearchSettings(BaseSettings):
+    """
+    Конфигурация для подключения к Elasticsearch
+    """
+    host: str = Field(alias='ELASTICSEARCH_HOST', default='127.0.0.1')
+    port: int = Field(alias='ELASTICSEARCH_PORT', default=9200)
+    username: str = Field(alias='ELASTICSEARCH_USERNAME', default='')
+    password: str = Field(alias='ELASTICSEARCH_PASSWORD', default='')
+    use_ssl: bool = Field(alias='ELASTICSEARCH_USE_SSL', default=False)
+    verify_certs: bool = Field(alias='ELASTICSEARCH_VERIFY_CERTS', default=False)
+    timeout: float = Field(alias='ELASTICSEARCH_TIMEOUT', default=30.0)
+    max_retries: int = Field(alias='ELASTICSEARCH_MAX_RETRIES', default=3)
+
+    # Индексы
+    courses_index: str = Field(alias='ELASTICSEARCH_COURSES_INDEX', default='courses')
+    course_topics_index: str = Field(alias='ELASTICSEARCH_COURSE_TOPICS_INDEX', default='course_topics')
+    lessons_index: str = Field(alias='ELASTICSEARCH_LESSONS_INDEX', default='lessons')
+
+    @property
+    def url(self) -> str:
+        """Формирует URL для подключения к Elasticsearch"""
+        protocol = 'https' if self.use_ssl else 'http'
+        if self.username and self.password:
+            return f"{protocol}://{self.username}:{self.password}@{self.host}:{self.port}"
+        return f"{protocol}://{self.host}:{self.port}"
+
+
 class Settings(BaseSettings):
     project_name: str = Field(alias="PROJECT_NAME", default="LevelUpper")
     project_description: str = Field(
@@ -93,6 +120,7 @@ class Settings(BaseSettings):
     redis: RedisSettings = RedisSettings()
     media: MediaSettings = MediaSettings()
     auth_service: AuthServiceSettings = AuthServiceSettings()
+    elasticsearch: ElasticsearchSettings = ElasticsearchSettings()
 
     default_host: str = "0.0.0.0"
     default_port: int = 8000

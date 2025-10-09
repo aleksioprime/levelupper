@@ -3,13 +3,16 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from starlette import status
 
 from src.core.schemas import UserJWT
-from src.dependencies.course import get_course_service
+from src.dependencies.course import get_course_service, get_course_params
 from src.dependencies.permissions.base import permission_required
-from src.schemas.course import CourseSchema, CourseCreateSchema, CourseUpdateSchema, CourseDetailSchema
+from src.schemas.pagination import PaginatedResponse
+from src.schemas.course import (
+    CourseSchema, CourseCreateSchema, CourseUpdateSchema, CourseDetailSchema, CourseQueryParams
+)
 from src.schemas.moderator import ModeratorCreateSchema, ModeratorListSchema, ModeratorSchema
 from src.services.course import CourseService
 
@@ -155,3 +158,22 @@ async def remove_course_moderator(
     Удаляет модератора курса
     """
     await service.remove_moderator(course_id, user_id)
+
+
+# Поисковые эндпоинты для Elasticsearch
+
+@router.get(
+    path='/search/',
+    summary='Поиск курсов',
+    response_model=PaginatedResponse[CourseSchema],
+    status_code=status.HTTP_200_OK,
+)
+async def search_courses(
+        params: Annotated[CourseQueryParams, Depends(get_course_params)],
+        service: Annotated[CourseService, Depends(get_course_service)] = None,
+        user: Annotated[UserJWT, Depends(permission_required())] = None,
+) -> PaginatedResponse[CourseSchema]:
+    """
+    Поиск курсов с использованием Elasticsearch
+    """
+    return await service.search_courses(params)
