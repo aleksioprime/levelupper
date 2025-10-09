@@ -1,0 +1,19 @@
+{
+  "settings": {
+    "number_of_shards": 1
+  },
+  "mappings": {
+    "properties": {
+      "id": { "type": "keyword" },
+      "title": { "type": "text", "analyzer": "russian" },
+      "content": { "type": "text", "analyzer": "russian" },
+      "date": { "type": "date" },
+      "order": { "type": "integer" },
+      "topic_id": { "type": "keyword" },
+      "topic_title": { "type": "text", "analyzer": "russian" },
+      "course_id": { "type": "keyword" },
+      "created_at": { "type": "date" },
+      "updated_at": { "type": "date" }
+    }
+  }
+}

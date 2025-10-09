@@ -1,0 +1,36 @@
+{
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 1
+  },
+  "mappings": {
+    "properties": {
+      "id": { "type": "keyword" },
+      "title": { "type": "text", "analyzer": "russian" },
+      "description": { "type": "text", "analyzer": "russian" },
+      "groups": {
+        "type": "nested",
+        "properties": {
+          "id": { "type": "keyword" },
+          "name": { "type": "text", "analyzer": "russian" }
+        }
+      },
+      "moderators": {
+        "type": "nested",
+        "properties": {
+          "user_id": { "type": "keyword" }
+        }
+      },
+      "topics": {
+        "type": "nested",
+        "properties": {
+          "id": { "type": "keyword" },
+          "title": { "type": "text", "analyzer": "russian" },
+          "order": { "type": "integer" }
+        }
+      },
+      "created_at": { "type": "date" },
+      "updated_at": { "type": "date" }
+    }
+  }
+}
