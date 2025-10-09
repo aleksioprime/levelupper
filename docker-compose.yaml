@@ -58,6 +58,7 @@ services:
       - ./back/airflow/dags:/opt/airflow/dags
       - ./back/airflow/logs:/opt/airflow/logs
       - ./back/airflow/plugins:/opt/airflow/plugins
+      - ./back/airflow/config:/opt/airflow/config
       - ./back/airflow/requirements.txt:/requirements.txt
       - ./back/airflow/init.sh:/opt/airflow/init.sh
     ports:
@@ -80,6 +81,7 @@ services:
       - ./back/airflow/dags:/opt/airflow/dags
       - ./back/airflow/logs:/opt/airflow/logs
       - ./back/airflow/plugins:/opt/airflow/plugins
+      - ./back/airflow/config:/opt/airflow/config
       - ./back/airflow/requirements.txt:/requirements.txt
       - ./back/airflow/init.sh:/opt/airflow/init.sh
     entrypoint: /opt/airflow/init.sh
