@@ -1,12 +1,6 @@
 """
 Представления админки для всех моделей
 """
-import uuid
-import asyncio
-from typing import Any, Dict, List
-import httpx
-from sqladmin import ModelView
-from starlette.requests import Request
 
 from .base import BaseAdminView
 from src.models import (
@@ -16,62 +10,6 @@ from src.models import (
     QuestionBlock, Question, AnswerOption,
     Grade, Comment, Progress
 )
-from src.core.config import settings
-
-
-class AuthServiceMixin:
-    """Миксин для обогащения данных пользователями из auth-сервиса"""
-
-    @staticmethod
-    async def enrich_with_user_info(data: List[Dict], user_field: str = "user_id") -> List[Dict]:
-        """Обогащает данные информацией о пользователях"""
-        if not data:
-            return data
-
-        # Собираем все user_id
-        user_ids = set()
-        for item in data:
-            user_id = item.get(user_field)
-            if user_id:
-                user_ids.add(str(user_id))
-
-        if not user_ids:
-            return data
-
-        # Получаем информацию о пользователях батч-запросом
-        try:
-            headers = {}
-            # Добавляем service token для межсервисной аутентификации, если он настроен
-            if settings.auth_service.service_token:
-                headers["Authorization"] = f"Bearer {settings.auth_service.service_token}"
-
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                response = await client.post(
-                    f"{settings.auth_service.url}/api/v1/users/batch/",
-                    json={"user_ids": list(user_ids)},
-                    headers=headers
-                )
-
-                if response.status_code == 200:
-                    users_data = response.json()["users"]
-
-                    # Обогащаем данные
-                    for item in data:
-                        user_id = str(item.get(user_field, ""))
-                        if user_id in users_data:
-                            user_info = users_data[user_id]
-                            item[f"{user_field}_info"] = f"{user_info.get('first_name', '')} {user_info.get('last_name', '')} ({user_info.get('username', '')})"
-                        else:
-                            item[f"{user_field}_info"] = f"Пользователь {user_id}"
-
-        except Exception:
-            # В случае ошибки просто отображаем ID
-            for item in data:
-                user_id = item.get(user_field)
-                if user_id:
-                    item[f"{user_field}_info"] = f"Пользователь {user_id}"
-
-        return data
 
 
 # Курсы и обучение
@@ -88,7 +26,7 @@ class CourseAdminView(BaseAdminView, model=Course):
     icon = "fa-solid fa-book"
 
 
-class CourseModeratorAdminView(BaseAdminView, AuthServiceMixin, model=CourseModerator):
+class CourseModeratorAdminView(BaseAdminView, model=CourseModerator):
     """Админка для модераторов курсов"""
 
     column_list = [CourseModerator.id, "user_info", CourseModerator.course_id, CourseModerator.created_at]
@@ -98,26 +36,6 @@ class CourseModeratorAdminView(BaseAdminView, AuthServiceMixin, model=CourseMode
     name = "Модератор курса"
     name_plural = "Модераторы курсов"
     icon = "fa-solid fa-user-shield"
-
-    async def list(self, request: Request) -> Any:
-        """Переопределяем список для обогащения данными пользователей"""
-        result = await super().list(request)
-
-        # Обогащаем данные пользователей
-        if hasattr(result, 'data') and result.data:
-            data_list = []
-            for item in result.data:
-                item_dict = item.__dict__.copy() if hasattr(item, '__dict__') else dict(item)
-                data_list.append(item_dict)
-
-            enriched_data = await self.enrich_with_user_info(data_list, "user_id")
-
-            # Обновляем результат
-            for i, item in enumerate(result.data):
-                if i < len(enriched_data):
-                    item.user_info = enriched_data[i].get("user_id_info", "")
-
-        return result
 
 
 class CourseTopicAdminView(BaseAdminView, model=CourseTopic):
@@ -166,7 +84,7 @@ class GroupAdminView(BaseAdminView, model=Group):
     icon = "fa-solid fa-users"
 
 
-class EnrollmentAdminView(BaseAdminView, AuthServiceMixin, model=Enrollment):
+class EnrollmentAdminView(BaseAdminView, model=Enrollment):
     """Админка для записей в группы"""
 
     column_list = [Enrollment.id, "user_info", Enrollment.group_id, Enrollment.role, Enrollment.status, Enrollment.date_start]
@@ -177,26 +95,6 @@ class EnrollmentAdminView(BaseAdminView, AuthServiceMixin, model=Enrollment):
     name = "Запись в группу"
     name_plural = "Записи в группы"
     icon = "fa-solid fa-user-plus"
-
-    async def list(self, request: Request) -> Any:
-        """Переопределяем список для обогащения данными пользователей"""
-        result = await super().list(request)
-
-        # Обогащаем данные пользователей
-        if hasattr(result, 'data') and result.data:
-            data_list = []
-            for item in result.data:
-                item_dict = item.__dict__.copy() if hasattr(item, '__dict__') else dict(item)
-                data_list.append(item_dict)
-
-            enriched_data = await self.enrich_with_user_info(data_list, "user_id")
-
-            # Обновляем результат
-            for i, item in enumerate(result.data):
-                if i < len(enriched_data):
-                    item.user_info = enriched_data[i].get("user_id_info", "")
-
-        return result
 
 
 # Задания и тестирование
@@ -222,7 +120,7 @@ class AssignmentAdminView(BaseAdminView, model=Assignment):
     icon = "fa-solid fa-tasks"
 
 
-class SubmissionAdminView(BaseAdminView, AuthServiceMixin, model=Submission):
+class SubmissionAdminView(BaseAdminView, model=Submission):
     """Админка для отправок заданий"""
 
     column_list = [Submission.id, "student_info", Submission.assignment_id, Submission.score, Submission.submitted_at]
@@ -232,24 +130,6 @@ class SubmissionAdminView(BaseAdminView, AuthServiceMixin, model=Submission):
     name = "Отправка задания"
     name_plural = "Отправки заданий"
     icon = "fa-solid fa-paper-plane"
-
-    async def list(self, request: Request) -> Any:
-        """Обогащаем данными студентов"""
-        result = await super().list(request)
-
-        if hasattr(result, 'data') and result.data:
-            data_list = []
-            for item in result.data:
-                item_dict = item.__dict__.copy() if hasattr(item, '__dict__') else dict(item)
-                data_list.append(item_dict)
-
-            enriched_data = await self.enrich_with_user_info(data_list, "student_id")
-
-            for i, item in enumerate(result.data):
-                if i < len(enriched_data):
-                    item.student_info = enriched_data[i].get("student_id_info", "")
-
-        return result
 
 
 class QuestionBlockAdminView(BaseAdminView, model=QuestionBlock):
@@ -290,8 +170,7 @@ class AnswerOptionAdminView(BaseAdminView, model=AnswerOption):
     icon = "fa-solid fa-check-circle"
 
 
-# Оценки и обратная связь
-class GradeAdminView(BaseAdminView, AuthServiceMixin, model=Grade):
+class GradeAdminView(BaseAdminView, model=Grade):
     """Админка для оценок"""
 
     column_list = [Grade.id, Grade.value, "teacher_info", Grade.submission_id, Grade.graded_at]
@@ -301,26 +180,8 @@ class GradeAdminView(BaseAdminView, AuthServiceMixin, model=Grade):
     name_plural = "Оценки"
     icon = "fa-solid fa-star"
 
-    async def list(self, request: Request) -> Any:
-        """Обогащаем данными преподавателей"""
-        result = await super().list(request)
 
-        if hasattr(result, 'data') and result.data:
-            data_list = []
-            for item in result.data:
-                item_dict = item.__dict__.copy() if hasattr(item, '__dict__') else dict(item)
-                data_list.append(item_dict)
-
-            enriched_data = await self.enrich_with_user_info(data_list, "teacher_id")
-
-            for i, item in enumerate(result.data):
-                if i < len(enriched_data):
-                    item.teacher_info = enriched_data[i].get("teacher_id_info", "")
-
-        return result
-
-
-class CommentAdminView(BaseAdminView, AuthServiceMixin, model=Comment):
+class CommentAdminView(BaseAdminView, model=Comment):
     """Админка для комментариев"""
 
     column_list = [Comment.id, Comment.text, "teacher_info", Comment.submission_id, Comment.question_id]
@@ -331,26 +192,7 @@ class CommentAdminView(BaseAdminView, AuthServiceMixin, model=Comment):
     name_plural = "Комментарии"
     icon = "fa-solid fa-comment"
 
-    async def list(self, request: Request) -> Any:
-        """Обогащаем данными преподавателей"""
-        result = await super().list(request)
 
-        if hasattr(result, 'data') and result.data:
-            data_list = []
-            for item in result.data:
-                item_dict = item.__dict__.copy() if hasattr(item, '__dict__') else dict(item)
-                data_list.append(item_dict)
-
-            enriched_data = await self.enrich_with_user_info(data_list, "teacher_id")
-
-            for i, item in enumerate(result.data):
-                if i < len(enriched_data):
-                    item.teacher_info = enriched_data[i].get("teacher_id_info", "")
-
-        return result
-
-
-# Прогресс обучения
 class ProgressAdminView(BaseAdminView, model=Progress):
     """Админка для прогресса обучения"""
 
