@@ -6,20 +6,12 @@ import os
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 
-# Настройки для подключения к БД
-DB_HOST = os.getenv('DB_HOST', 'postgres')
-DB_NAME = os.getenv('DB_NAME', 'levelupper')
-DB_USER = os.getenv('DB_USER', 'dallenal')
-DB_PASSWORD = os.getenv('DB_PASSWORD', '1xOsgTgZf')
-DB_PORT = os.getenv('DB_PORT', '5432')
-
-# Формируем DSN для подключения
-DATABASE_URL = f"postgresql+asyncpg://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+from src.core.config import settings
 
 # Создаем асинхронный движок
 async_engine = create_async_engine(
-    DATABASE_URL,
-    echo=False,  # Отключаем логи SQL в Airflow
+    settings.db.dsn,
+    echo=False,
     future=True
 )
 

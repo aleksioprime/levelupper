@@ -23,9 +23,6 @@ class BaseAdminView(ModelView):
     column_details_exclude_list = ["created_at", "updated_at"]
     form_excluded_columns = ["created_at", "updated_at"]
 
-    # Настройки для улучшения UX
-    column_default_sort = [("created_at", True)]
-
     # Отключаем автозагрузку связанных объектов для стабильности
     form_ajax_refs = {}
 

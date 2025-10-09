@@ -40,7 +40,7 @@ dag = DAG(
 def check_elasticsearch_health():
     """Проверяет здоровье Elasticsearch кластера"""
     import asyncio
-    from src.elasticsearch.client import elasticsearch_client
+    from src.es.client import elasticsearch_client
 
     async def check_health():
         logger.info("Проверка здоровья Elasticsearch кластера...")
@@ -66,7 +66,7 @@ def check_elasticsearch_health():
 def setup_elasticsearch_indices():
     """Создает или обновляет индексы Elasticsearch"""
     import asyncio
-    from src.elasticsearch.client import elasticsearch_client
+    from src.es.client import elasticsearch_client
 
     async def setup_indices():
         logger.info("Настройка индексов Elasticsearch...")
@@ -93,9 +93,9 @@ def sync_courses_to_elasticsearch():
     import asyncio
     from sqlalchemy import select, func
 
-    from db_adapter import async_session_maker
-    from src.elasticsearch.client import elasticsearch_client
-    from course_models import Course, CourseTopic, CourseModerator
+    from src.db.postgres import async_session_maker
+    from src.es.client import elasticsearch_client
+    from src.models.course import Course, CourseTopic, CourseModerator
 
     async def sync_courses():
         logger.info("Синхронизация курсов с Elasticsearch...")
@@ -170,9 +170,9 @@ def sync_course_topics_to_elasticsearch():
     import asyncio
     from sqlalchemy import select, func
 
-    from db_adapter import async_session_maker
-    from src.elasticsearch.client import elasticsearch_client
-    from course_models import CourseTopic, Course
+    from src.db.postgres import async_session_maker
+    from src.es.client import elasticsearch_client
+    from src.models.course import CourseTopic, Course
 
     async def sync_topics():
         logger.info("Синхронизация тем курсов с Elasticsearch...")
@@ -262,9 +262,9 @@ def sync_lessons_to_elasticsearch():
     import asyncio
     from sqlalchemy import select
 
-    from db_adapter import async_session_maker
-    from src.elasticsearch.client import elasticsearch_client
-    from course_models import Lesson, CourseTopic, Course
+    from src.db.postgres import async_session_maker
+    from src.es.client import elasticsearch_client
+    from src.models.course import Lesson, CourseTopic, Course
 
     async def sync_lessons():
         logger.info("Синхронизация уроков с Elasticsearch...")
@@ -343,9 +343,9 @@ def cleanup_orphaned_documents():
     import asyncio
     from sqlalchemy import select
 
-    from db_adapter import async_session_maker
-    from src.elasticsearch.client import elasticsearch_client
-    from course_models import Course, CourseTopic, Lesson
+    from src.db.postgres import async_session_maker
+    from src.es.client import elasticsearch_client
+    from src.models.course import Course, CourseTopic, Lesson
 
     async def cleanup_documents():
         logger.info("Очистка устаревших документов в Elasticsearch...")
@@ -424,9 +424,9 @@ def validate_sync_completeness():
     import asyncio
     from sqlalchemy import select, func
 
-    from db_adapter import async_session_maker
-    from src.elasticsearch.client import elasticsearch_client
-    from course_models import Course, CourseTopic, Lesson
+    from src.db.postgres import async_session_maker
+    from src.es.client import elasticsearch_client
+    from src.models.course import Course, CourseTopic, Lesson
 
     async def validate_sync():
         logger.info("Проверка полноты синхронизации...")

@@ -20,6 +20,7 @@ class CourseAdminView(BaseAdminView, model=Course):
     column_searchable_list = [Course.title]
     column_sortable_list = [Course.title, Course.created_at]
     column_details_exclude_list = ["groups", "topics", "moderators"]
+    form_excluded_columns = ["moderators"]
 
     name = "Курс"
     name_plural = "Курсы"
@@ -88,9 +89,8 @@ class EnrollmentAdminView(BaseAdminView, model=Enrollment):
     """Админка для записей в группы"""
 
     column_list = [Enrollment.id, Enrollment.group_id, Enrollment.role, Enrollment.status, Enrollment.date_start]
-    column_searchable_list = [Enrollment.user_id]
     column_sortable_list = [Enrollment.role, Enrollment.status, Enrollment.date_start]
-    column_details_exclude_list = ["progress"]
+    column_details_exclude_list = ["progress", "user_id"]
 
     name = "Запись в группу"
     name_plural = "Записи в группы"
