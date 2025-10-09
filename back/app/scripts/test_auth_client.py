@@ -1,3 +1,10 @@
+"""
+Финальный тест всех возможностей auth_service с подробными выводами.
+Запускается как самостоятельный скрипт.
+
+Использование:
+    docker-compose -p levelupper exec backend python scripts/test_auth_client.py
+"""
 import asyncio
 import uuid
 import sys

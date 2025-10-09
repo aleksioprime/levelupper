@@ -3,7 +3,7 @@
 Скрипт для тестирования подключения к Elasticsearch и просмотра индексов.
 
 Использование:
-    docker-compose exec backend python scripts/test_elasticsearch.py
+    docker-compose -p levelupper exec backend python scripts/test_elasticsearch.py
 """
 
 import logging
